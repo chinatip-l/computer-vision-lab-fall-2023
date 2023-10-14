@@ -1,0 +1,6 @@
+.code-workspace
+**.json
+
+**/.vscode/
+**/.cmake/
+**/CMakeFiles/
