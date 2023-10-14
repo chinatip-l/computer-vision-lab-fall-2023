@@ -8,7 +8,10 @@ enable_testing()
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-add_executable(homework1_opencv main.cpp)
+
+
+
+add_executable(homework1_opencv main.cpp func.cpp)
 target_link_libraries( homework1_opencv ${OpenCV_LIBS} )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

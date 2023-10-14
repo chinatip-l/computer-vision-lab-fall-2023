@@ -523,6 +523,30 @@ homework1_opencv/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/homework1_opencv.dir/build.make CMakeFiles/homework1_opencv.dir/build
 .PHONY : homework1_opencv/fast
 
+func.o: func.cpp.o
+.PHONY : func.o
+
+# target to build an object file
+func.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/homework1_opencv.dir/build.make CMakeFiles/homework1_opencv.dir/func.cpp.o
+.PHONY : func.cpp.o
+
+func.i: func.cpp.i
+.PHONY : func.i
+
+# target to preprocess a source file
+func.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/homework1_opencv.dir/build.make CMakeFiles/homework1_opencv.dir/func.cpp.i
+.PHONY : func.cpp.i
+
+func.s: func.cpp.s
+.PHONY : func.s
+
+# target to generate assembly for a file
+func.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/homework1_opencv.dir/build.make CMakeFiles/homework1_opencv.dir/func.cpp.s
+.PHONY : func.cpp.s
+
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -587,6 +611,9 @@ help:
 	@echo "... NightlyTest"
 	@echo "... NightlyUpdate"
 	@echo "... homework1_opencv"
+	@echo "... func.o"
+	@echo "... func.i"
+	@echo "... func.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
