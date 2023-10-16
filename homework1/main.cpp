@@ -8,9 +8,10 @@
 #define BASE_PATH "/home/chinatip/work/computer_vision/homework1"
 #define SRC_PATH "test_img"
 #define OUT_PATH "output"
+
+// define file name, can uncomment to select the input
 #define FILENAME "taipei101"
 // #define FILENAME "aeroplane"
-// #define FILENAME "test"
 #define BW_OUT_SUFX "Q1"
 #define EDGE_OUT_SUFX "Q2"
 #define POOL_OUT_SUFX "Q3"

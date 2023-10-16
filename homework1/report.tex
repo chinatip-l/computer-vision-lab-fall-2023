@@ -1,0 +1,230 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings} % for code listing
+
+% Geometry
+\geometry{a4paper, margin=1in}
+
+% Title
+\title{Computer Vision Homework Report \\ \Large Homework 1}
+
+\author{Chinatip Lawansuk}
+\date{}
+
+
+% For code listings
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  language=C++  % this line sets the language to C++
+}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+This project focuses on develop an algorithm to perform principle operations in Computer Vision from scratch.
+
+\section{Objectives}
+\begin{enumerate}
+  \item Understand Theory of Computer Vision
+  \item Improve C++/Python Programming Skill
+\end{enumerate}
+
+\section{Requirements}
+\begin{enumerate}
+  \item Write a function to convert an image to greyscale image
+  \item Write a convolution operation with edge detection kernel using zero padding and stride 1
+  \item Write a pooling operation with using Max pooling, 2$\times$2 kernel, and  stride 2
+  \item Write a binarisation operation (customise the threshold independently).
+\end{enumerate}
+
+\section{System Configuration}
+\subsection{Hardware}
+\begin{itemize}
+  \item CPU\@: Intel Core-i7
+  \item GPU\@: NVIDIA
+  \item RAM\@: 40 GB
+\end{itemize}
+
+\subsection{Software}
+\begin{itemize}
+  \item OS\@: Windows Subsystem Linux x64 (Ubuntu 22.04.3 LTS Kernel Ver. 5.15.90.1)
+  \item GCC Version\@: \verb|11.4.0 x86_64-linux-gnu|
+  \item OpenCV Version\@: \verb|4.5.4+dfsg-9ubuntu4|
+\end{itemize}
+
+\chapter{Solution, Explanation, and Result}
+In this project, explanation is embedded in the comment.
+\section{Convert Image to Greyscale Image}
+\begin{tabular}{lll}
+  Input  & : & Matrix of Input Image  \\
+  Output & : & Matrix of Output Image \\
+\end{tabular}
+
+\begin{lstlisting}
+// offset will be applied for both before, and after the target pixel ----
+int out_h = ((img.rows + (2 * padding) - kernel.rows) / stride) + 1;
+
+// create intermediate buffer and add padding, size is w+(2*padding),h+(2*padding)
+// then copy the content of image to the buffer
+Mat padded;
+padded = Mat(img.rows + (2 * padding), img.cols + (2 * padding), img.type(), Scalar(0, 0, 0));
+for (int j = 0; j < img.rows; j++)
+{
+    for (int i = 0; i < img.cols; i++)
+    {
+        padded.at<Vec3b>(j+padding,i+padding)=img.at<Vec3b>(j,i);
+    }
+}
+
+\end{lstlisting}
+
+
+\chapter{Discussion}
+Briefly introduce the computer vision tasks you will be performing in this homework.t
+
+\section{Problem Statements}
+\subsection{Problem 1}
+State the problem statement for Problem 1 here.
+
+\subsection{Problem 2}
+State the problem statement for Problem 2 here.kllmm
+
+
+
+% Add more problems if needed
+
+\section{Original Images}
+\begin{figure}[h]
+  \centering
+
+  \caption{Original Image 1}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+
+  \caption{Original Image 2}
+\end{figure}
+
+\section{Processing Steps and Outputs for Problem 1}
+\subsection{Step 1: [Description]}
+\subsubsection{Explanation}
+Explain what this step does and how it solves or contributes to solving Problem 1.
+
+\subsubsection{Output}
+\begin{figure}[h]
+  \centering
+
+  \caption{Step 1 Output for Problem 1}
+\end{figure}
+
+% Repeat for Steps 2, 3, 4, etc.
+
+\section{Processing Steps and Outputs for Problem 2}
+% Similar to the previous section, but for Problem 2
+
+\section{Code Explanation}
+
+\begin{lstlisting}
+
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+int main() {
+    // Read the image
+    cv::Mat image = cv::imread("original_image1.png");
+
+    // Processing steps for Problem 1
+    // ...
+
+    // Processing steps for Problem 2
+    // ...
+
+    cv::imwrite("step1_output_problem1.png", image);
+
+    return 0;
+}
+\end{lstlisting}
+
+\section{Conclusion}
+Summarize what you have learned from completing this homework assignment in the context of computer vision.
+
+\appendix
+
+\chapter{Source Code: main.cpp}
+\begin{lstlisting}
+  
+  #include <iostream>
+  #include <opencv2/opencv.hpp>
+  
+  int main() {
+      // Read the image
+      cv::Mat image = cv::imread("original_image1.png");
+  
+      // Processing steps for Problem 1
+      // ...
+  
+      // Processing steps for Problem 2
+      // ...
+  
+      cv::imwrite("step1_output_problem1.png", image);
+  
+      return 0;
+  }
+  \end{lstlisting}
+\chapter{Source Code: func.hpp}
+\begin{lstlisting}
+  
+  #include <iostream>
+  #include <opencv2/opencv.hpp>
+  
+  int main() {
+      // Read the image
+      cv::Mat image = cv::imread("original_image1.png");
+  
+      // Processing steps for Problem 1
+      // ...
+  
+      // Processing steps for Problem 2
+      // ...
+  
+      cv::imwrite("step1_output_problem1.png", image);
+  
+      return 0;
+  }
+  \end{lstlisting}
+\chapter{Source Code: func.cpp}
+\begin{lstlisting}
+  
+  #include <iostream>
+  #include <opencv2/opencv.hpp>
+  
+  int main() {
+      // Read the image
+      cv::Mat image = cv::imread("original_image1.png");
+  
+      // Processing steps for Problem 1
+      // ...
+  
+      // Processing steps for Problem 2
+      // ...
+  
+      cv::imwrite("step1_output_problem1.png", image);
+  
+      return 0;
+  }
+  \end{lstlisting}
+
+\end{document}
