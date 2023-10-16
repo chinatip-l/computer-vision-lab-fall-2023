@@ -70,11 +70,11 @@ int main(int argc, char **argv)
     imwrite(out_file, pooled);
 
     Mat bin;
-    int thres=64;
+    int thres=128;
     bin = applyBinarisation(pooled, thres);
     printf("Binarised (T=%d) Img Size: w x h %d x %d\n",thres, bin.cols, bin.rows);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_t_%d.%s", BASE_PATH, OUT_PATH, FILENAME, BIN_OUT_SUFX,thres, EXT);
-    imwrite(out_file, pooled);
+    imwrite(out_file, bin);
 
     namedWindow("Original", WINDOW_AUTOSIZE);
     appendImgToCanvas(og_img);
