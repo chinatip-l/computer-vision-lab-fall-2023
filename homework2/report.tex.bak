@@ -1,0 +1,98 @@
+\documentclass[12pt,a4paper]{article}
+
+% Packages
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{listings} % for code listing
+
+% Geometry
+\geometry{a4paper, margin=1in}
+
+% Title
+\title{Computer Vision Homework Report}
+\author{Your Name}
+%\date{\today}
+
+% For code listings
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  language=C++  % this line sets the language to C++
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Briefly introduce the computer vision tasks you will be performing in this homework.
+
+\section{Problem Statements}
+\subsection{Problem 1}
+State the problem statement for Problem 1 here.
+
+\subsection{Problem 2}
+State the problem statement for Problem 2 here.
+
+% Add more problems if needed
+
+\section{Original Images}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.4\textwidth]{original_image1.png}
+  \caption{Original Image 1}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+
+  \caption{Original Image 2}
+\end{figure}
+
+\section{Processing Steps and Outputs for Problem 1}
+\subsection{Step 1: [Description]}
+\subsubsection{Explanation}
+Explain what this step does and how it solves or contributes to solving Problem 1.
+
+\subsubsection{Output}
+\begin{figure}[h]
+  \centering
+
+  \caption{Step 1 Output for Problem 1}
+\end{figure}
+
+% Repeat for Steps 2, 3, 4, etc.
+
+\section{Processing Steps and Outputs for Problem 2}
+% Similar to the previous section, but for Problem 2
+
+\section{Code Explanation}
+\begin{lstlisting}
+// Your C++ code goes here
+#include <iostream>
+#include <opencv2/opencv.hpp>
+
+int main() {
+    // Read the image
+    cv::Mat image = cv::imread("original_image1.png");
+
+    // Processing steps for Problem 1
+    // ...
+
+    // Processing steps for Problem 2
+    // ...
+
+    cv::imwrite("step1_output_problem1.png", image);
+
+    return 0;
+}
+\end{lstlisting}
+
+\section{Conclusion}
+Summarize what you have learned from completing this homework assignment in the context of computer vision.
+
+\end{document}
