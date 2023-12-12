@@ -22,4 +22,9 @@ Mat calculateEdgeDirection(Mat , Mat );
 int quantiseDirection(float);
 Mat calculateNonMaximumSuppression(Mat , Mat ) ;
 
+Mat applyDoubleThresholding(Mat ,int ,int );
+Mat applyHysteresis(Mat);
+
+void applyHoughTransform(cv::Mat, std::vector<cv::Vec2f>& , float , float , int );
+
 #endif
