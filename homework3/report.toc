@@ -6,16 +6,26 @@
 \contentsline {subsection}{\numberline {1.3.2}Software}{2}{subsection.1.3.2}%
 \contentsline {chapter}{\numberline {2}Solution, Explanation, and Result}{3}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Main Function}{3}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Applying Mean Filter}{6}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Apply Median}{9}{section.2.3}%
-\contentsline {chapter}{\numberline {3}Discussion}{14}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Observations}{14}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Kernel size affect in Mean Filter}{14}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Kernel size affect in Median Filter}{19}{subsection.3.1.2}%
-\contentsline {subsection}{\numberline {3.1.3}Choosing Filter}{24}{subsection.3.1.3}%
-\contentsline {chapter}{\numberline {A}Git Repository}{25}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{26}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{29}{appendix.C}%
-\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{30}{appendix.D}%
-\contentsline {chapter}{\numberline {E}Source Code: graph.py}{36}{appendix.E}%
-\contentsline {chapter}{\numberline {F}Result Images}{38}{appendix.F}%
+\contentsline {section}{\numberline {2.2}Applying Greyscale Filter}{8}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Apply Gaussian Filter}{10}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Create Gaussian Filter}{10}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Apply Filter}{10}{subsection.2.3.2}%
+\contentsline {section}{\numberline {2.4}Apply Canny Edge Detector}{15}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}Sobel X and Y}{15}{subsection.2.4.1}%
+\contentsline {subsection}{\numberline {2.4.2}Gradient Calculation}{17}{subsection.2.4.2}%
+\contentsline {subsubsection}{Edge Strength}{17}{section*.6}%
+\contentsline {subsubsection}{Edge Direction}{19}{section*.8}%
+\contentsline {subsection}{\numberline {2.4.3}Non Maximum Suppression}{20}{subsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.4.4}Double Thresholding}{23}{subsection.2.4.4}%
+\contentsline {subsection}{\numberline {2.4.5}Hysteresis Edge Tracking}{25}{subsection.2.4.5}%
+\contentsline {section}{\numberline {2.5}Hough Transform}{27}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Discussion}{30}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Observations}{30}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Parameters in Gaussian Filter}{30}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Angle step in Hough Transform}{32}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Choosing Filter}{33}{subsection.3.1.3}%
+\contentsline {chapter}{\numberline {A}Git Repository}{34}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{35}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{40}{appendix.C}%
+\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{41}{appendix.D}%
+\contentsline {chapter}{\numberline {E}Result Images}{52}{appendix.E}%

@@ -14,9 +14,9 @@
 #define OUT_PATH "output"
 
 // define file name, can uncomment to select the input
-// #define FILENAME "img1"
+#define FILENAME "img1"
 // #define FILENAME "img2"
-#define FILENAME "img3"
+// #define FILENAME "img3"
 #define GAUSSIAN_FILT_SUFX "q1"
 #define CANNY_EDGE_SUFX "q2"
 #define HOUGH_SUFX "q3"
@@ -53,7 +53,6 @@ int main(int argc, char **argv)
     appendImgToCanvas(og_img);
     Mat bw_img;
     bw_img = applyGreyscaleFilter(og_img);
-    // bw_img=og_img;
 
     Mat res_img, selected_img;
     int kernel_size;
@@ -73,43 +72,43 @@ int main(int argc, char **argv)
             }
         }
     }
-    appendImgToCanvas(selected_img);
+    // appendImgToCanvas(selected_img);
 
     Mat sobelx;
     sobelx = applySobelX(selected_img);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_X.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, sobelx);
-    appendImgToCanvas(sobelx);
+    // appendImgToCanvas(sobelx);
 
     Mat sobely;
     sobely = applySobelY(selected_img);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_Y.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, sobely);
-    appendImgToCanvas(sobely);
+    // appendImgToCanvas(sobely);
 
     Mat edge_strength;
     edge_strength = calculateEdgeStrength(sobelx, sobely);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_STRENGTH.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, edge_strength);
-    appendImgToCanvas(edge_strength);
+    // appendImgToCanvas(edge_strength);
 
     Mat edge_direction;
     edge_direction = calculateEdgeDirection(sobelx, sobely);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_DIR.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, edge_direction);
-    appendImgToCanvas(edge_direction);
+    // appendImgToCanvas(edge_direction);
 
     Mat nms;
     nms = calculateNonMaximumSuppression(edge_strength, edge_direction);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_NMS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, nms);
-    appendImgToCanvas(nms);
+    // appendImgToCanvas(nms);
 
     Mat double_thresholed;
     double_thresholed = applyDoubleThresholding(nms, 10, 20);
     snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_DTS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
     imwrite(out_file, double_thresholed);
-    appendImgToCanvas(double_thresholed);
+    // appendImgToCanvas(double_thresholed);
 
     Mat hyst;
     hyst = applyHysteresis(double_thresholed);
@@ -150,9 +149,11 @@ int main(int argc, char **argv)
                 cv::Point pt2(cvRound(x0 - alpha * (-sin_t)), cvRound(y0 - alpha * cos_t));
                 cv::line(hough, pt1, pt2, cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
             }
-            snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HOUGH_THETA_%d_THRES_%d.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX,theta_steps[step_theta],threshold, EXT);
+            snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HOUGH_THETA_%d_THRES_%d.%s", BASE_PATH, OUT_PATH, FILENAME, HOUGH_SUFX,theta_steps[step_theta],threshold, EXT);
             imwrite(out_file, hough);
-            appendImgToCanvas(hough);
+            if(threshold==75 && step_theta==0)
+                appendImgToCanvas(hough);
+            // appendImgToCanvas(hough);
             ulines.clear();
         }
     }
