@@ -130,37 +130,55 @@ def update_contour(contour, image, grad_x, grad_y, alpha, beta, gamma):
     for i, point in enumerate(contour):
         neighbors = [np.roll(contour, -1, axis=0)[i], np.roll(contour, 1, axis=0)[i]]
         internal_force = alpha * (neighbors[0] - point) + beta * (neighbors[1] - 2 * point + neighbors[0])
+
+        # wgx=grad_x[int(point[1])-1:int(point[1])+2, int(point[0])-1:int(point[0])+2]
+        # wgy=grad_y[int(point[1])-1:int(point[1])+2, int(point[0])-1:int(point[0])+2]
+        # print(wgx)
         external_force = -gamma * np.array([grad_x[int(point[1]), int(point[0])], grad_y[int(point[1]), int(point[0])]])
+        # external_force = -gamma * np.array([np.average(wgx), np.average(wgy)])
         
         displacement = internal_force + external_force
-        displacement_magnitude = np.linalg.norm(displacement)
-        max_displacement=5
-        # Limit the displacement
-        if displacement_magnitude > max_displacement:
-            displacement = (displacement / displacement_magnitude) * max_displacement
+        # displacement_magnitude = np.linalg.norm(displacement)
+        # max_displacement=5
+        # # Limit the displacement
+        # if displacement_magnitude > max_displacement:
+        #     displacement = (displacement / displacement_magnitude) * max_displacement
         # print(internal_force,external_force)
         new_contour[i] += displacement
         # new_contour[i] += internal_force + external_force
     return new_contour
 
 # Parameters
-alpha, beta, gamma = 0.1, 0.001, 0.01
-iterations = 2000
+alpha, beta, gamma = 0.02, 0.05, 0.005
+iterations = 500
 
 # Load image
 image = cv2.imread('test_img/img1.jpg')  # Load in grayscale
-image = cv2.GaussianBlur(image,(5,5),0)
-height,width,layers=image.shape
-video=cv2.VideoWriter('img1.mp4',cv2.VideoWriter_fourcc('m','p','4','v'),30,(width,height))
-# video=cv2.VideoWriter('img1.mp4',cv2.VideoWriter_fourcc('M','J','P','G'),30,(width,height))
+
 result =  image.copy()
 image= cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+cv2.imshow('Active Contour', image)
+cv2.waitKey(0)
+image = cv2.GaussianBlur(image,(3,3),0)
+cv2.imshow('Active Contour', image)
+cv2.waitKey(0)
+height,width=image.shape
+video=cv2.VideoWriter('img1.mp4',cv2.VideoWriter_fourcc('m','p','4','v'),30,(width,height))
+# video=cv2.VideoWriter('img1.mp4',cv2.VideoWriter_fourcc('M','J','P','G'),30,(width,height))
+
+cv2.imshow('Active Contour', image)
+cv2.waitKey(0)
 grad_x, grad_y = image_gradient(image)
+cv2.imshow('Active Contour', grad_x)
+cv2.waitKey(0)
+cv2.imshow('Active Contour', grad_y)
+cv2.waitKey(0)
+# cv2.imshow('Active Contour', grad_y)
 
 # Initialize contour
 center = (image.shape[1] // 2, image.shape[0] // 2)
 radius = 400
-contour = initialize_contour(image.shape, center, radius,100)
+contour = initialize_contour(image.shape, center, radius,50)
 
 # Active contour model
 for _ in range(iterations):
@@ -173,6 +191,8 @@ for _ in range(iterations):
         p1=(int(next[0]), int(next[1]))
         cv2.circle(tmp, p0, 2, color=colour,)
         cv2.line(img=tmp,pt1=p0,pt2=p1,color=colour,thickness=1)
+    cv2.imshow('Active Contour', tmp)
+    cv2.waitKey(20)
     video.write(tmp)
 
 # Display the result
@@ -181,23 +201,7 @@ for _ in range(iterations):
 #     cv2.circle(result, (int(point[0]), int(point[1])), 1, (0, 0, 255), -1)
 # cv2.imshow('Active Contour', result)
 video.release()
-video.set(cv2.CAP_PROP_POS_FRAMES,0)
-while(video.isOpened()):
-  # Capture frame-by-frame
-    ret, frame = video.read()
-    if ret == True:
-    
-        # Display the resulting frame
-        cv2.imshow('Frame',frame)
-    
-        # Press Q on keyboard to  exit
-        if cv2.waitKey(25) & 0xFF == ord('q'):
-            break
-    
-    # Break the loop
-    else: 
-        break
 # cv2.imshow('Active Contour', video)
 
-cv2.waitKey(0)
+# cv2.waitKey(0)
 cv2.destroyAllWindows()
