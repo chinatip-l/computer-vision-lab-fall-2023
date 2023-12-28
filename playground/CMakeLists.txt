@@ -7,10 +7,16 @@ enable_testing()
 find_package(CUDA REQUIRED)
 find_package( OpenCV REQUIRED )
 
+
+
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories(${CUDA_INCLUDE_DIRS})
 
-
+set(CUDA_SOURCE_FILES
+    cuda_example.cu
+)
+set(CUDA_NVCC_FLAGS "-arch=native")
+set(CMAKE_CUDA_ARCHITECTURES 70) 
 
 
 # ADD_EXECUTABLE(playground main.cpp)
