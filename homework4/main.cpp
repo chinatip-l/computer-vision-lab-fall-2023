@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     vector<Point2f> contour;
 
     contour=initContourPointCircle(magnitude.cols/2,magnitude.rows/2,300,100);
-    float alpha=0.5,beta=0.0001,gamma=0.1;
+    float alpha=0.5,beta=0.01,gamma=0.1;
 
     vector<Mat> buf;
     for(int k =0; k<5000;k++){

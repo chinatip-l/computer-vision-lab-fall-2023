@@ -264,6 +264,7 @@ vector<Point2f> initContourPointCircle(int cx, int cy, int r, int cnt)
     return tmp;
 }
 
+// maybe calculate energy and return, compare outside
 void activeContour(Mat magnitude, Mat direction, vector<Point2f> &contour, float alpha, float beta, float gamma)
 {
     int p_cnt = contour.size();
@@ -279,8 +280,10 @@ void activeContour(Mat magnitude, Mat direction, vector<Point2f> &contour, float
         e_curve = powf32((pn - (2 * p) + pp).x, 2) + powf32((pn - (2 * p) + pp).y, 2);
         // e_cont=powf32((p-pp).x,2)+powf32((p-pp).y,2);
         // printf("%f\n", e_curve);
-        contour[i].x += alpha * (pn - p).x + beta * ((pn - p) - (p - pp)).x;
-        contour[i].y += alpha * (pn - p).y + beta * ((pn - p) - (p - pp)).y;
+        // contour[i].x += alpha * (pn - p).x + beta * ((pn - p) - (p - pp)).x;
+        // contour[i].y += alpha * (pn - p).y + beta * ((pn - p) - (p - pp)).y;
+        contour[i].x += alpha* (pn - p).x + beta * ((pn - pp)).x;
+        contour[i].y += alpha * (pn - p).y + beta * ((pn - pp)).y;
         // printf("    point #%d %f,%f\n",(i-1+p_cnt)%p_cnt,(pp).x,(pp).y);
         // contour[i].x-=image.at<Vec3b>(p.y,p.x)[0]>0?image.at<Vec3b>(p.y,p.x)[0]:1;
         // contour[i].y-=image.at<Vec3b>(p.y,p.x)[0]>0?image.at<Vec3b>(p.y,p.x)[0]:1;
