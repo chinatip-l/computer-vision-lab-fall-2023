@@ -150,7 +150,7 @@ def update_contour(contour, image, grad_x, grad_y, alpha, beta, gamma):
 
 # Parameters
 alpha, beta, gamma = 0.02, 0.05, 0.005
-iterations = 500
+iterations = 200
 
 # Load image
 image = cv2.imread('test_img/img1.jpg')  # Load in grayscale
