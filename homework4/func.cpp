@@ -1,6 +1,7 @@
 #include "include/func.hpp"
 #include <vector>
 #include <cmath>
+#include <limits>
 const double K_E = std::exp(1.0);
 
 Mat applyGreyscaleFilter(Mat img)
@@ -213,6 +214,10 @@ Mat calculateEdgeStrength(Mat x, Mat y)
                 {
                     tmp = 255;
                 }
+                if (tmp < 50)
+                {
+                    tmp = 0;
+                }
                 strength.at<Vec3b>(j, i)[k] = (int)tmp;
             }
         }
@@ -249,58 +254,100 @@ Mat calculateEdgeDirection(Mat x, Mat y)
     return direction;
 }
 
-vector<Point2f> initContourPointCircle(int cx, int cy, int r, int cnt)
+vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int cnt)
 {
-    vector<Point2f> tmp;
+    vector<ContourPoint> tmp;
     float theta = 0, d_theta = (2 * CV_PI) / cnt;
     for (int i = 0; i < cnt; i++)
     {
         float x, y;
         x = (r * cosf32(theta)) + cx;
         y = (r * sinf32(theta)) + cy;
-        tmp.push_back(Point2f(x, y));
+        ContourPoint p;
+        p.x = x;
+        p.y = y;
+        p.energy = numeric_limits<float>::max();
+        tmp.push_back(p);
         theta += d_theta;
     }
     return tmp;
 }
 
 // maybe calculate energy and return, compare outside
-void activeContour(Mat magnitude, Mat direction, vector<Point2f> &contour, float alpha, float beta, float gamma)
+void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
 {
     int p_cnt = contour.size();
-    vector<Point2f> prev_contour(contour);
+    vector<ContourPoint> prev_contour(contour);
     for (int i = 0; i < p_cnt; i++)
     {
-        Point2f pp, p, pn;
+        ContourPoint pp, p, pn;
         pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
         p = prev_contour[i % p_cnt];
         pn = prev_contour[(i + 1) % p_cnt];
-        float e_cont, e_curve, e_image;
-        e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        e_curve = powf32((pn - (2 * p) + pp).x, 2) + powf32((pn - (2 * p) + pp).y, 2);
-        // e_cont=powf32((p-pp).x,2)+powf32((p-pp).y,2);
-        // printf("%f\n", e_curve);
-        // contour[i].x += alpha * (pn - p).x + beta * ((pn - p) - (p - pp)).x;
-        // contour[i].y += alpha * (pn - p).y + beta * ((pn - p) - (p - pp)).y;
-        contour[i].x += alpha* (pn - p).x + beta * ((pn - pp)).x;
-        contour[i].y += alpha * (pn - p).y + beta * ((pn - pp)).y;
-        // printf("    point #%d %f,%f\n",(i-1+p_cnt)%p_cnt,(pp).x,(pp).y);
-        // contour[i].x-=image.at<Vec3b>(p.y,p.x)[0]>0?image.at<Vec3b>(p.y,p.x)[0]:1;
-        // contour[i].y-=image.at<Vec3b>(p.y,p.x)[0]>0?image.at<Vec3b>(p.y,p.x)[0]:1;
+        // p.x += alpha * (p - pp).x + beta * ((pn - (2 * p) + pp)).x;
+        // p.y += alpha * (p - pp).y + beta * ((pn - (2 * p) + pp)).y;
 
-        // printf("ret t %f %f\n",p.x,p.y);
-        float mag = magnitude.at<Vec3b>((int)p.y, (int)p.x)[0];
-        // if (mag < 1)
-        // {
-        //     mag = 1;
-        // }
-        // printf("ret r\n");
-        float theta = direction.at<Vec3f>(p.y, p.x)[0];
-        if (!isnanf(theta))
+        Vec2f img_force(0, 0), tmp;
+        int w_size = 45, offset = w_size / 2;
+        for (int wj = 0; wj < w_size; wj++)
         {
-            contour[i].x += gamma * mag * cos(theta);
-            contour[i].y += gamma * mag * sin(theta);
+            for (int wi = 0; wi < w_size; wi++)
+            {
+                int v_mag = magnitude.at<Vec3b>(wj - offset, wi - offset)[0];
+                float v_theta = direction.at<Vec3f>(wj - offset, wi - offset)[0];
+                float x=0, y=0;
+                if(!isnanf(v_theta)){
+                    // v_theta+=CV_PI;
+                    x = v_mag * cosf32(v_theta);
+                    y = v_mag * sinf32(v_theta);
+                }
+                tmp = Vec2f(x, y);
+                img_force += tmp;
+            }
         }
+        img_force /= -w_size * w_size;
+
+        float e_cont, e_curve, e_image, e_point;
+        int mag = magnitude.at<Vec3b>((int)p.y, (int)p.x)[0];
+        float theta = direction.at<Vec3f>(p.y, p.x)[0];
+
+        // if (!isnanf(theta))
+        // {
+        //     p.x -= gamma * mag * cos(theta);
+        //     p.y -= gamma * mag * sin(theta);
+        // }
+        p.x += gamma *img_force[0];
+        p.y += gamma * img_force[1];
+        if(pn.settle || pp.settle){
+            beta=0;
+            }
+        
+
+        // e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
+        e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
+        e_curve = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
+        e_image = -mag*mag;
+        e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
+
+        if (e_point > p.energy && e_point<0)
+        {
+            contour[i].settle=true;
+            continue;
+        }
+        printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
+
+        contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x+gamma * img_force[0];
+        contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y+gamma * img_force[1];
+        contour[i].energy = e_point;
+        
+        // if (!isnanf(theta))
+        // {
+        //     // contour[i].x -= gamma * mag * cos(theta);
+        //     // contour[i].y -= gamma * mag * sin(theta);
+            
+        // }
+        // contour[i].x += gamma * img_force[0];
+        // contour[i].y += gamma * img_force[1];
         // printf("%d - %f\n",i, theta);
 
         if (contour[i].x < 0 || contour[i].x != contour[i].x)
@@ -322,17 +369,136 @@ void activeContour(Mat magnitude, Mat direction, vector<Point2f> &contour, float
     }
 }
 
-Mat showSnake(Mat input, vector<Point2f> contour)
+void activeContourWithForce(Mat magnitude_d1, Mat direction_d1, Mat magnitude_d2, Mat direction_d2, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
+{
+    int p_cnt = contour.size();
+    vector<ContourPoint> prev_contour(contour);
+    for (int i = 0; i < p_cnt; i++)
+    {
+        ContourPoint pp, p, pn;
+        // pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
+        // p = prev_contour[i % p_cnt];
+        // pn = prev_contour[(i + 1) % p_cnt];
+
+        pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
+        p = prev_contour[i % p_cnt];
+        pn = prev_contour[(i + 1) % p_cnt];
+
+        float e_cont, e_curve, e_image, e_point;
+
+        Vec2f img_force(0, 0), tmp;
+        int w_size = 25, offset = w_size / 2;
+        for (int wj = 0; wj < w_size; wj++)
+        {
+            for (int wi = 0; wi < w_size; wi++)
+            {
+                int v_mag = magnitude_d2.at<Vec3b>(wj - offset, wi - offset)[0];
+                float v_theta = direction_d2.at<Vec3f>(wj - offset, wi - offset)[0]+CV_PI;
+                float x=0, y=0;
+                if(!isnanf(v_theta)){
+                    x = v_mag * cosf32(v_theta);
+                    y = v_mag * sinf32(v_theta);
+                }
+                tmp = Vec2f(x, y);
+                img_force += tmp;
+            }
+        }
+        img_force /= w_size * w_size;
+
+        int mag = magnitude_d1.at<Vec3b>((int)p.y, (int)p.x)[0];
+        float theta = direction_d1.at<Vec3f>(p.y, p.x)[0];
+
+        // if (!isnanf(theta))
+        // {
+        //     p.x -= gamma * img_force[0];
+        //     p.y -= gamma * img_force[1];
+        // }
+
+        // ContourPoint pnpp = pn + pp - 2 * p, p_pp = p - pp;
+        // e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
+        // e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
+        // e_curve = powf32((pn - p).x, 2) + powf32((pn - p).y, 2);
+        e_cont = powf32((pn - p).x, 2) + powf32((pn - p).y, 2);
+        e_curve = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
+        e_image = -mag;
+        e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
+        printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
+        // if (e_point > p.energy)
+        // {
+        //     continue;
+        // }
+
+        // contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((pn - p)).x+ gamma*img_force[0];
+        // contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((pn - p)).y+ gamma*img_force[1];
+        // contour[i].x += alpha * (pn + pp - 2 * p).x ;
+        // contour[i].y += alpha * (pn + pp - 2 * p).y ;
+        contour[i].x += alpha * (pn-p).x + beta * ((pn + pp - 2 * p)).x + gamma*(img_force[0]);
+        contour[i].y += alpha * (pn-p).y + beta * ((pn + pp - 2 * p)).y+ gamma*(img_force[1]);
+
+        contour[i].x += gamma * img_force[0];
+        contour[i].y += gamma * img_force[1];
+        contour[i].energy = e_point;
+        // if (!isnanf(theta))
+        // {
+        //     // contour[i].x -= gamma * mag * cosf32(theta);
+        //     // contour[i].y -= gamma * mag * sinf32(theta);
+        //     contour[i].x += gamma * img_force[0];
+        //     contour[i].y += gamma * img_force[1];
+            
+        // }
+        // printf("%d - %f\n",i, theta);
+
+        if (contour[i].x < 0 || contour[i].x != contour[i].x)
+        {
+            contour[i].x = 0;
+        }
+        if (contour[i].x >= magnitude_d1.cols || contour[i].x != contour[i].x)
+        {
+            contour[i].x = magnitude_d1.cols - 1;
+        }
+        if (contour[i].y < 0 || contour[i].y != contour[i].y)
+        {
+            contour[i].y = 0;
+        }
+        if (contour[i].y >= magnitude_d1.rows || contour[i].y != contour[i].y)
+        {
+            contour[i].y = magnitude_d1.rows - 1;
+        }
+    }
+}
+
+Mat showSnake(Mat input, vector<ContourPoint> contour)
 {
     Mat res = input.clone();
     int p_cnt = contour.size();
     for (int i = 0; i < p_cnt; i++)
     {
-        Point2f p = contour[i % p_cnt];
-        Point2f pn = contour[(i + 1) % p_cnt];
-        circle(res, p, 3, (255, 255, 128, 128), -1);
-        circle(res, pn, 3, (255, 255, 128), -1);
+        ContourPoint p = contour[i % p_cnt];
+        ContourPoint pn = contour[(i + 1) % p_cnt];
+        circle(res, p, 3, (0, 0, (int)(i * 255 / p_cnt)), -1);
+        circle(res, pn, 3, (0, 0, (int)(i * 255 / p_cnt)), -1);
         line(res, p, pn, (255, 255, 128), 1);
     }
     return res;
+}
+
+void showGradient(Mat &input, Mat magnitude, Mat direction, int grid)
+{
+    int r = 5;
+    for (int j = 0; j < input.rows; j += grid)
+    {
+        for (int i = 0; i < input.cols; i += grid)
+        {
+            Point2i c(i, j);
+            int mag = magnitude.at<Vec3b>(j, i)[0];
+            float theta = direction.at<Vec3f>(j, i)[0];
+            if (mag > 0 && !isnanf(theta))
+            {
+                Point2i e;
+                e.x = (int)(r * (mag / 255) * cosf32(theta)) + i;
+                e.y = (int)(r * (mag / 255) * sinf32(theta)) + j;
+                arrowedLine(input, c, e, (0, 0, mag), 1);
+            }
+        }
+    }
 }

@@ -7,6 +7,12 @@
 using namespace cv;
 using namespace std;
 
+class ContourPoint : public Point2f{
+    public:
+        float energy;
+        bool settle;
+};
+
 Mat applyGreyscaleFilter(Mat);
 float calculateGaussian(int,int,float);
 
@@ -20,11 +26,13 @@ Mat applySobelY(Mat);
 Mat calculateEdgeStrength(Mat , Mat );
 Mat calculateEdgeDirection(Mat , Mat );
 
-vector<Point2f> initContourPointCircle(int,int,int,int);
+vector<ContourPoint> initContourPointCircle(int,int,int,int);
 
-void activeContour(Mat,Mat, vector<Point2f>&,float,float,float);
+void activeContour(Mat,Mat, vector<ContourPoint>&,float,float,float);
+void activeContourWithForce(Mat,Mat,Mat,Mat, vector<ContourPoint>&,float,float,float);
 
-Mat showSnake(Mat, vector<Point2f>);
+Mat showSnake(Mat, vector<ContourPoint>);
+void showGradient(Mat&,Mat,Mat,int);
 
 
 #endif

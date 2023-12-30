@@ -12,9 +12,9 @@
 #define OUT_PATH "output"
 
 // define file name, can uncomment to select the input
-#define FILENAME "img3"
+// #define FILENAME "img1"
 // #define FILENAME "img2"
-// #define FILENAME "img3"
+#define FILENAME "img3"
 #define GAUSSIAN_FILT_SUFX "q1"
 #define CANNY_EDGE_SUFX "q2"
 #define HOUGH_SUFX "q3"
@@ -28,7 +28,6 @@
 Mat canvas;
 
 void appendImgToCanvas(Mat);
-void drawArrows(cv::Mat &, const cv::Mat &, const cv::Mat &, int , double);
 
 int main(int argc, char **argv)
 {
@@ -55,7 +54,7 @@ int main(int argc, char **argv)
 
     Mat res_img, selected_img;
     
-    Mat gaussian_filter = createGaussianFilter(13, 5);
+    Mat gaussian_filter = createGaussianFilter(5, 1);
     res_img = applyFilter(bw_img, gaussian_filter, 1, false);
     printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
     
@@ -78,24 +77,42 @@ int main(int argc, char **argv)
 
     Mat direction;
     direction=calculateEdgeDirection(sobelx,sobely);
-    imshow("Original",direction);
+    // imshow("Original",direction);
     // waitKey(2000);
 
-    vector<Point2f> contour;
+    Mat mag2,dir2,dx,dy,res;
+    dx=applySobelX(magnitude);
+    dy=applySobelY(magnitude);
+    mag2=calculateEdgeStrength(dx,dy);
+    dir2=calculateEdgeDirection(dx,dy);
+    res=mag2.clone();
+    showGradient(res,mag2,dir2,2);
+    imshow("Original", res);
+    waitKey(0);
 
-    contour=initContourPointCircle(magnitude.cols/2,magnitude.rows/2,300,100);
-    float alpha=0.5,beta=0.01,gamma=0.1;
+
+    vector<ContourPoint> contour;
+
+    contour=initContourPointCircle(magnitude.cols/2,magnitude.rows/2,400,100);
+    float alpha=0.5,beta=0.0001,gamma=0.5;
 
     vector<Mat> buf;
-    for(int k =0; k<5000;k++){
+    for(int k =0; k<10000;k++){
         Mat i;
-        activeContour(magnitude,direction,contour,alpha,beta,gamma);
-        i=showSnake(magnitude,contour);
+        activeContour(mag2,dir2,contour,alpha,beta,gamma);
+        // activeContourWithForce(magnitude,direction,mag2,dir2,contour,alpha,beta,gamma);
+
+        Mat mag_with_field;
+        mag2.copyTo(mag_with_field);
+        // showGradient(mag_with_field,magnitude,direction,2);
+        i=showSnake(mag_with_field,contour);
+
+        
         // buf.push_back(i);
         // appendImgToCanvas(i);
+        printf("frame %d\n",k);
         imshow("Original", i);
-        waitKey(10);
-        // printf("Frame #%d\n",k);
+        waitKey(1);
     }
     printf("Finish\n");
     // appendImgToCanvas(magnitude);
