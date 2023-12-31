@@ -887,83 +887,12 @@ Gaussian blur is a method used in the active contour algorithm to smooth out ima
 After conducting multiple experiments to address a specific problem, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.\\
 On the other hand, a window that's too large risks overlooking important features. Larger windows encompass more of the image, which can dilute the significance of smaller, yet critical features. This can cause the algorithm to miss subtle but essential details, as it focuses on broader trends over smaller, localized variations. In essence, the window size acts as a balancing factor. It must be large enough to capture sufficient context for accurate analysis but not so large that it overlooks finer details. Adjusting this parameter based on the feature gap and intensity ensures the algorithm remains sensitive to important details while maintaining processing efficiency.
 
+\subsection{alpha beta gamma}
+\paragraph*{}
 
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{result_img/noise1_his.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q1_K3P1_his.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
+\subsection{convergence detection and terminal condition}
+\paragraph*{}
 
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q1_K5P2_his.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q1_K7P3_his.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of Histogram of noise1.png using Mean filter on different kernel size}
-%     \label{fig:n1-mean-hist}
-%   \end{minipage}
-% \end{figure}
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{test_img/noise2.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q1_K3P1.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
-
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q1_K5P2.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q1_K7P3.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of noise2.png using Mean filter on different kernel size}
-%   \end{minipage}
-
-% \end{figure}
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{result_img/noise2_his.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q1_K3P1_his.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
-
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q1_K5P2_his.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q1_K7P3_his.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of Histogram of noise2.png using Mean filter using different kernel size}
-%     \label{fig:n2-mean-hist}
-%   \end{minipage}
-% \end{figure}
-\clearpage
 
 
 \subsection{Angle step in Hough Transform}
@@ -995,84 +924,10 @@ Small angle step tends to over detect new line, while too high angle step will g
     \end{minipage}
 
 \end{figure}
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{result_img/noise1_his.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q2_K3P1_his.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
 
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q2_K5P2_his.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise1_q2_K7P3_his.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of Histogram of noise1.png using Mean filter on different kernel size}
-%     \label{fig:n1-median-hist}
-%   \end{minipage}
-% \end{figure}
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{test_img/noise2.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q2_K3P1.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
-
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q2_K5P2.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{0.49\textwidth}
-%       % \includegraphics[width=\linewidth]{output/noise2_q2_K7P3.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of noise2.png using Mean filter on different kernel size}
-%   \end{minipage}
-
-% \end{figure}
-% \begin{figure}[!htb]
-%   \begin{minipage}{\linewidth}
-%     \centering
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{result_img/noise2_his.png}
-%       \subcaption{Original Image}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q2_K3P1_his.png}
-%       \subcaption{Kernel = 3}
-%     \end{subfigure}
-
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q2_K5P2_his.png}
-%       \subcaption{Kernel = 5}
-%     \end{subfigure}
-%     \begin{subfigure}{1\textwidth}
-%       % \includegraphics[height=5.3cm]{output/noise2_q2_K7P3_his.png}
-%       \subcaption{Kernel = 7}
-%     \end{subfigure}
-
-%     \caption{Comparison of Histogram of noise2.png using Mean filter using different kernel size}
-%     \label{fig:n2-median-hist}
-%   \end{minipage}
-% \end{figure}
 \clearpage
 
-\subsection{Choosing Filter}
+\subsection{Summary}
 \paragraph*{}Please be reminded that there is no single, complete formula that yields the best
 result. For this case, prior knowledge about the line direction helps increase accuracy and reduce calculation complexity
 
