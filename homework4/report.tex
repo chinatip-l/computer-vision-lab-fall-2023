@@ -16,7 +16,7 @@
 \geometry{a4paper, margin=1in}
 
 % Title
-\title{Computer Vision Homework Report \\ \Large Homework 3}
+\title{Computer Vision Homework Report \\ \Large Homework 4}
 
 \author{Chinatip Lawansuk\\\\112998405}
 \date{}
@@ -41,66 +41,58 @@ This project focuses on develop an algorithm to perform principle operations in 
 
 \section{Objectives}
 \begin{enumerate}
-  \item Understand Theory of Computer Vision
-  \item Improve C++/Python Programming Skill
+    \item Understand Theory of Computer Vision
+    \item Improve C++/Python Programming Skill
 \end{enumerate}
 
 \section{Requirements}
 \begin{enumerate}
-  \item Write a Gaussian filter operation (customise parameters independently).
-  \item Write a Canny Edge Detection operation.
-  \item Write a Hough Transformer (customise parameters independently).
+    \item Write a Gaussian filter operation (customise parameters independently).
+    \item Write a Sobel Edge Detection operation.
+    \item Write a Active Contour (customise parameters independently).
 \end{enumerate}
 
 \section{System Configuration}
 \subsection{Hardware}
 \begin{itemize}
-  \item CPU\@: Intel Core-i7
-  \item GPU\@: NVIDIA
-  \item RAM\@: 40 GB
+    \item CPU\@: Intel Core-i7
+    \item GPU\@: NVIDIA
+    \item RAM\@: 40 GB
 \end{itemize}
 
 \subsection{Software}
 \begin{itemize}
-  \item OS\@: Windows Subsystem Linux x64 (Ubuntu 22.04.3 LTS Kernel Ver. 5.15.90.1)
-  \item GCC Version\@: \verb|11.4.0 x86_64-linux-gnu|
-  \item OpenCV Version\@: \verb|4.5.4+dfsg-9ubuntu4|
+    \item OS\@: Windows Subsystem Linux x64 (Ubuntu 22.04.3 LTS Kernel Ver. 5.15.90.1)
+    \item GCC Version\@: \verb|11.4.0 x86_64-linux-gnu|
+    \item OpenCV Version\@: \verb|4.5.4+dfsg-9ubuntu4|
 \end{itemize}
 
 \chapter{Solution, Explanation, and Result}
 In this project, code explanation is embedded in the comment section in the code.
 
 \section{Main Function}
-The main function of the program will load the desired picture, apply the function sequentially, display on the window, and write a new file for the proceeded image.
+The main function of the program will load the desired picture, apply the function sequentially, display on the window, and write a new file for the proceeded image and video. This main function also control the iteration for Active Contour algorithm.
 \begin{lstlisting}
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
 #include <unistd.h>
 #include <string.h>
 #include "include/func.hpp"
+#include <opencv2/videoio/videoio_c.h>
 
 #define MAX_LEN 250
-// // path for personal computer
-// #define BASE_PATH "/home/chinatip/work/computer_vision/homework3"
 
 // path for lab
-#define BASE_PATH "/home/chinatip/computer-vision-lab-fall-2023/homework3"
+#define BASE_PATH "/home/chinatip/computer-vision-lab-fall-2023/homework4"
 #define SRC_PATH "test_img"
 #define OUT_PATH "output"
 
 // define file name, can uncomment to select the input
-// #define FILENAME "img1"
+#define FILENAME "img1"
 // #define FILENAME "img2"
-#define FILENAME "img3"
-#define GAUSSIAN_FILT_SUFX "q1"
-#define CANNY_EDGE_SUFX "q2"
-#define HOUGH_SUFX "q3"
-#define KER_INFO_3 "K3P1"
-#define KER_INFO_5 "K5P2"
-#define KER_INFO_7 "K7P3"
-#define EXT "png"
+// #define FILENAME "img3"
 
-using namespace cv;
+#define EXT "jpg"
 
 Mat canvas;
 
@@ -130,110 +122,120 @@ int main(int argc, char **argv)
     bw_img = applyGreyscaleFilter(og_img);
 
     Mat res_img, selected_img;
-    int kernel_size;
-    float sigma;
-    for (sigma = 0.5; sigma <= 2; sigma += 0.5)
-    {
-        for (kernel_size = 3; kernel_size <= 7; kernel_size += 2)
-        {
-            Mat gaussian_filter = createGaussianFilter(kernel_size, sigma);
-            res_img = applyFilter(bw_img, gaussian_filter, 1, false);
-            printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
-            snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_K%d_SIG_%.1f.%s", BASE_PATH, OUT_PATH, FILENAME, GAUSSIAN_FILT_SUFX, kernel_size, sigma, EXT);
-            imwrite(out_file, res_img);
-            if (sigma == 1.0 && kernel_size == 5)
-            {
-                selected_img = res_img.clone();
-            }
-        }
-    }
-    appendImgToCanvas(selected_img);
+
+    Mat gaussian_filter = createGaussianFilter(3, 1);
+    res_img = applyFilter(bw_img, gaussian_filter, 1, false);
+    printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
+
+    appendImgToCanvas(res_img);
 
     Mat sobelx;
-    sobelx = applySobelX(selected_img);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_X.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, sobelx);
+    sobelx = applySobelX(res_img);
     appendImgToCanvas(sobelx);
 
     Mat sobely;
-    sobely = applySobelY(selected_img);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_Y.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, sobely);
+    sobely = applySobelY(res_img);
     appendImgToCanvas(sobely);
 
-    Mat edge_strength;
-    edge_strength = calculateEdgeStrength(sobelx, sobely);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_STRENGTH.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, edge_strength);
-    appendImgToCanvas(edge_strength);
+    Mat magnitude;
+    magnitude = calculateEdgeStrength(sobelx, sobely);
 
-    Mat edge_direction;
-    edge_direction = calculateEdgeDirection(sobelx, sobely);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_DIR.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, edge_direction);
-    appendImgToCanvas(edge_direction);
+    Mat direction;
+    direction = calculateEdgeDirection(sobelx, sobely);
 
-    Mat nms;
-    nms = calculateNonMaximumSuppression(edge_strength, edge_direction);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_NMS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, nms);
-    appendImgToCanvas(nms);
+    Mat output;
+    magnitude.copyTo(output);
+    showGradient(output, magnitude, direction, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/first_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
 
-    Mat double_thresholed;
-    double_thresholed = applyDoubleThresholding(nms, 10, 20);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_DTS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, double_thresholed);
-    appendImgToCanvas(double_thresholed);
+    Mat mag2, dir2, dx, dy, res;
+    dx = applySobelX(magnitude);
+    dy = applySobelY(magnitude);
+    mag2 = calculateEdgeStrength(dx, dy);
+    dir2 = calculateEdgeDirection(dx, dy);
 
-    Mat hyst;
-    hyst = applyHysteresis(double_thresholed);
-    snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HYS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-    imwrite(out_file, hyst);
-    appendImgToCanvas(hyst);
+    mag2.copyTo(output);
+    showGradient(output, mag2, dir2, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/second_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
 
-    // make a copy of hysteresis to use as result
-    Mat hough = hyst.clone();
-    std::vector<cv::Vec2f> ulines;
+    vector<ContourPoint> contour;
 
-    // Parameters for Hough Transform
-    float rho = 1; // distance resolution in pixels
-    int theta_steps[] = {1, 3, 5, 10};
-    int thresholds[] = { 35, 50, 75};
-    for (int step_theta = 0; step_theta < 4; step_theta++)
+    VideoWriter video;
+    char video_name[100] = "\0";
+    snprintf(video_name, 99, "%s/%s/vid_%s.mp4", BASE_PATH, OUT_PATH, FILENAME);
+    video.open(video_name, CV_FOURCC('m', 'p', '4', 'v'), 10, og_img.size(), true);
+
+    // We apply termination logic outside the active contour function
+    // it is done by calculate energy over 4 last epochs
+    // if it oscillates or stable, we increase count by 1
+    // The threshold of count is 20 to help avoid local minima
+
+    contour = initContourPointCircle(magnitude.cols / 2, magnitude.rows / 2, 400, 200);
+    float alpha = 0.05, beta = 0.00001, gamma = 0.5;
+    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0, diff1, diff2, diff3;
+    bool isOscillating = false, isConverging = false;
+    int osc_cnt = 0;
+    vector<Mat> buf;
+    char iter_text[25] = "\0";
+    for (int k = 0; k < 10000; k++)
     {
-        for (int step_threshold = 0; step_threshold < 3; step_threshold++)
+        Mat i;
+        activeContour(mag2, dir2, contour, alpha, beta, gamma);
+        current_e = contourEnergy(contour);
+
+        Mat mag_with_field;
+        og_img.copyTo(mag_with_field);
+        i = showSnake(mag_with_field, contour);
+
+        // calculate energy over 4 latest energy to check
+        // if converge or oscillate
+        e_4 = e_3;
+        e_3 = e_2;
+        e_2 = e_1;
+        e_1 = current_e;
+        diff1 = e_2 - e_1;
+        diff2 = e_3 - e_2;
+        diff3 = e_4 - e_3;
+        isOscillating = (diff1 * diff2 < 0) && (diff2 * diff3 < 0);
+        isConverging = std::abs(diff1) == std::abs(diff2) && std::abs(diff2) == std::abs(diff3);
+
+        if (!(isOscillating && isConverging))
         {
-            float theta = theta_steps[step_theta] * CV_PI / 180;
-            int threshold = thresholds[step_threshold];
-            // reset image
-            hough = hyst.clone();
-
-            // Apply Hough Transform
-            applyHoughTransform(hyst, ulines, rho, theta, threshold);
-
-            // Draw the lines on the original image
-            for (size_t i = 0; i < ulines.size(); i++)
+            min_e = current_e;
+            osc_cnt = 0;
+        }
+        else
+        {
+            osc_cnt += 1;
+            // termination condition
+            if (osc_cnt == 20)
             {
-                float r = ulines[i][0], t = ulines[i][1];
-                double cos_t = std::cos(t), sin_t = std::sin(t);
-                double x0 = r * cos_t, y0 = r * sin_t;
-                double alpha = 2000; // length that the line will be drawn to cover the image
 
-                // Adjust the start and end points for the new origin at the center of the image
-                cv::Point pt1(cvRound(x0 + alpha * (-sin_t)), cvRound(y0 + alpha * cos_t));
-                cv::Point pt2(cvRound(x0 - alpha * (-sin_t)), cvRound(y0 - alpha * cos_t));
-                cv::line(hough, pt1, pt2, cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+                snprintf(iter_text, 24, "Iteration: %d", k);
+                putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+                printf("Frame %d %f\n", k, min_e);
+                snprintf(out_file, MAX_LEN, "%s/%s/result_%s.%s", BASE_PATH, OUT_PATH, FILENAME, EXT);
+                imwrite(out_file, i);
+                imshow("Original", i);
+                video.write(i);
+                video.release();
+                waitKey(10);
+                break;
             }
-            snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HOUGH_THETA_%d_THRES_%d.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX,theta_steps[step_theta],threshold, EXT);
-            imwrite(out_file, hough);
-            appendImgToCanvas(hough);
-            ulines.clear();
+        }
+
+        if (k % 10 == 0)
+        {
+            snprintf(iter_text, 24, "Iteration: %d", k);
+            putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+            imshow("Original", i);
+            video.write(i);
+            waitKey(10);
         }
     }
-
-    namedWindow("Original", WINDOW_AUTOSIZE);
-
-    imshow("Original", canvas);
+    printf("Finish\n");
     waitKey(0);
     return 0;
 }
@@ -252,21 +254,19 @@ void appendImgToCanvas(Mat img)
         img.copyTo(canvas(Rect(old_w + 5, 0, img.cols, img.rows)));
     }
 }
-
-
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[width=1\linewidth]{program.png}
-  \caption{Program Output (Automatic place image in frame)}
+    \centering
+    \includegraphics[width=1\linewidth]{program.png}
+    \caption{Program Output (Automatic place image in frame)}
 \end{figure}
 \clearpage
 
 
 \section{Applying Greyscale Filter}
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Image  \\
-  Output & : & Matrix of Output Image \\
+    Input  & : & Matrix of Input Image  \\
+    Output & : & Matrix of Output Image \\
 \end{tabular}
 \begin{lstlisting}
 Mat applyGreyscaleFilter(Mat img)
@@ -297,10 +297,9 @@ Mat applyGreyscaleFilter(Mat img)
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{test_img/img3.png}
-  \includegraphics[height=0.4\paperheight]{result_img/img3_q1.png}
-  \caption{Comparison Between (U) Original and (L) Mean Filter Applied Kernel=3, Padding=1}
+    \centering
+      \includegraphics[height=0.4\paperheight]{output/grey_scale.jpg}
+    \caption{Output of Grey Scale function}
 \end{figure}
 \clearpage
 
@@ -309,9 +308,9 @@ Since using filter can be reused in multiple step, the general function is extra
 In order to use Gaussian filter, we need to create kernel using provided function below, then applt with the general function.
 \subsection{Create Gaussian Filter}
 \begin{tabular}{lll}
-  Input  & : & Kernel size (Integer)  \\
-         &   & Sigma (float) \\
-  Output & : & Matrix of Gaussian Filter \\
+    Input  & : & Kernel size (Integer)     \\
+           &   & Sigma (float)             \\
+    Output & : & Matrix of Gaussian Filter \\
 \end{tabular}
 \begin{lstlisting}
 float calculateGaussian(int x, int y, float sigma)
@@ -336,11 +335,11 @@ Mat createGaussianFilter(int size, float sigma)
 
 \subsection{Apply Filter}
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Image  \\
-         &   & Kernel Matrix \\
-         &   & Stride size (Integer)  \\
-         &   & Suppress Border (Bool)  \\
-  Output & : & Matrix of Output Image \\
+    Input  & : & Matrix of Input Image  \\
+           &   & Kernel Matrix          \\
+           &   & Stride size (Integer)  \\
+           &   & Suppress Border (Bool) \\
+    Output & : & Matrix of Output Image \\
 \end{tabular}
 \begin{lstlisting}
 Mat applyFilter(Mat img, Mat kernel, int stride, bool suppress_border)
@@ -422,7 +421,8 @@ Mat applyFilter(Mat img, Mat kernel, int stride, bool suppress_border)
     {
         for (int img_i = 0; img_i < img.cols; img_i += stride)
         {
-            // check if it is a border and suppress border if selected
+            // check if it is a border and suppress border
+            // if selected
             if (img_i < ker_w || img_j < ker_h || img_i > img.cols - ker_h - 1 || img_j > img.rows - ker_h - 1)
             {
                 if (suppress_border)
@@ -470,21 +470,20 @@ Mat applyFilter(Mat img, Mat kernel, int stride, bool suppress_border)
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q1_K3_SIG_1.0.png}
-  \includegraphics[height=0.4\paperheight]{output/img2_q1_K3_SIG_2.0.png}
-  \caption{Comparison Between (U) Original and (L) Gaussian Filter Applied Kernel=3, Sigma=2}
+    \centering
+    %   \includegraphics[height=0.4\paperheight]{output/img2_q1_K3_SIG_1.0.png}
+      \includegraphics[height=0.4\paperheight]{output/gaussian.jpg}
+    \caption{Output of Gaussian Filter function}
 \end{figure}
 \clearpage
 
 
-\section{Apply Canny Edge Detector}
-In order to perform Canny Edge Detection, please follow step below
+\section{Apply Edge Detector and Related Functions}
 \subsection{Sobel X and Y}
 This only apply Sobel kernel.
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Image  \\
-  Output & : & Matrix of Output Image \\
+    Input  & : & Matrix of Input Image  \\
+    Output & : & Matrix of Output Image \\
 \end{tabular}
 \begin{lstlisting}
 Mat applySobelX(Mat img_in)
@@ -508,10 +507,10 @@ Mat applySobelY(Mat img_in)
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_SOBEL_X.png}
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_SOBEL_Y.png}
-  \caption{Comparison Between (U) Original and (L) Gaussian Filter Applied Kernel=3, Sigma=2}
+    \centering
+      \includegraphics[height=0.4\paperheight]{output/sobel_x.jpg}
+      \includegraphics[height=0.4\paperheight]{output/sobel_y.jpg}
+    \caption{Output of Sobel X (Upper) and Sobel Y (Lower)}
 \end{figure}
 \clearpage
 
@@ -521,9 +520,9 @@ This step, we will get edge strength and direction.
 
 \subsubsection{Edge Strength}
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Sobel X  \\
-         & : & Matrix of Input Sobel Y  \\
-  Output & : & Matrix of Edge Strength \\
+    Input  & : & Matrix of Input Sobel X \\
+           & : & Matrix of Input Sobel Y \\
+    Output & : & Matrix of Edge Strength \\
 \end{tabular}
 \begin{lstlisting}
 Mat calculateEdgeStrength(Mat x, Mat y)
@@ -548,17 +547,17 @@ Mat calculateEdgeStrength(Mat x, Mat y)
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_EDGE_STRENGTH.png}
-  \caption{Edge Strength}
+    \centering
+      \includegraphics[height=0.4\paperheight]{output/magnitude.jpg}
+    \caption{Edge Strength}
 \end{figure}
 \clearpage
 
 \subsubsection{Edge Direction}
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Sobel X  \\
-         & : & Matrix of Input Sobel Y  \\
-  Output & : & Matrix of Edge Direction \\
+    Input  & : & Matrix of Input Sobel X  \\
+           & : & Matrix of Input Sobel Y  \\
+    Output & : & Matrix of Edge Direction \\
 \end{tabular}
 \begin{lstlisting}
 Mat calculateEdgeDirection(Mat x, Mat y)
@@ -580,344 +579,313 @@ Mat calculateEdgeDirection(Mat x, Mat y)
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_EDGE_DIR.png}
-  \caption{Direction of Gradient}
+    \centering
+      \includegraphics[height=0.4\paperheight]{output/direction.jpg}
+    \caption{Direction of Gradient}
 \end{figure}
 \clearpage
 
-\subsection{Non Maximum Suppression}
-This function will thinner the edge.
+\subsection{Active Contour}
+
+\subsubsection{\(ContourPoint\) Data Type}
+This inherit from \(cv2::Point2f\) class with additional property named \(energy\) used to store energy of each point.
+\begin{lstlisting}
+/**
+* @brief Class representing a point with additional energy attribute.
+*
+* Inherits from OpenCV's Point2f class and adds an energy attribute.
+* This can be used to represent points in an image with an associated energy value.
+*/
+class ContourPoint : public Point2f
+{
+public:
+    float energy; ///< Energy value of the contour point.
+};
+\end{lstlisting}
+
+
+\subsubsection{Initialise Contour}
+This function will intialise Contour points in a circle shape.\\
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input Edge Strength  \\
-         & : & Matrix of Input Edge Direction  \\
-  Output & : & Matrix of NMS Image \\
+    Input  & : & center of contour x (int)  \\
+           & : & center of contour y (int) \\
+           & : & radius of contour (int) \\
+           & : & number of point (int) \\
 \end{tabular}
 \begin{lstlisting}
-int quantiseDirection(float angle)
+/**
+* @brief Initialise contour points in a circular pattern.
+*
+* This function creates a set of contour points arranged in the shape of a circle.
+* It is useful for initializing contour-based algorithms, especially for circular objects.
+*
+* @param cx The x-coordinate of the circle's center.
+* @param cy The y-coordinate of the circle's center.
+* @param r The radius of the circle.
+* @param quantity The number of contour points to generate.
+* @return vector<ContourPoint> A vector of contour points arranged in a circular pattern.
+*/
+vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
 {
-    // convert radiant to degree
-    angle = angle * 180 / CV_PI;
+    vector<ContourPoint> tmp;
+    float theta = 0, d_theta = (2 * CV_PI) / quantity;
 
-    // quantise to 4 axes 
-    if ((angle >= 0 && angle < 22.5) || (angle >= 157.5 && angle <= 180))
+    for (int i = 0; i < quantity; i++)
     {
-        return 0;
+        float x, y;
+        // Calculate the x and y coordinates using polar to
+        // Cartesian conversion
+        x = (r * cosf32(theta)) + cx;
+        y = (r * sinf32(theta)) + cy;
+
+        // Create a ContourPoint and set its properties
+        ContourPoint p;
+        p.x = x;
+        p.y = y;
+
+        // Since we try to minimise the energy, we initialise
+        // the energy to the maximum float value
+        p.energy = numeric_limits<float>::max();
+
+        // Add the ContourPoint to the vector
+        tmp.push_back(p);
+        theta += d_theta;
     }
-    else if (angle >= 22.5 && angle < 67.5)
-    {
-        return 45;
-    }
-    else if (angle >= 67.5 && angle < 112.5)
-    {
-        return 90;
-    }
-    else if (angle >= 112.5 && angle < 157.5)
-    {
-        return 135;
-    }
-    else
-    {
-        return 0;
-    }
+
+    // Return the vector of contour points
+    return tmp;
 }
+\end{lstlisting}
 
-Mat calculateNonMaximumSuppression(cv::Mat strength, cv::Mat direction)
+
+
+
+\subsubsection{Active Contour}
+This function will perform Active Contour, by searching around each contour points and selecting the point that gives minimum energy to be a new contour point. While iteratively execute this function, the contour will converge to the minimum total energy.
+The energy function is given by
+\[E_{total}= \alpha E_{cont} + \beta E_{curv} + \gamma E_{grad}\]\\
+\[E_{cont} = ||p-pp||^2\]\\
+\[E_{curv} = ||pp+pn-2p||^2\]\\
+\[E_{grad} = -||\nabla I(p)||\]\\
+which \(p\) is current contour point, \(pn\) is next contour point , and \(pp\) is previous contour point.
+
+\begin{tabular}{lll}
+    Input  & : & Matrix of Input Edge Strength  \\
+           & : & Matrix of Input Edge Direction \\
+           & : & List of Contour Point (std::vector\(\langle ContourPoint\rangle\)) \\
+           & : & alpha (float)\\
+           & : & beta (float)\\
+           & : & gamma (float)\\
+\end{tabular}
+\begin{lstlisting}
+/**
+* @brief Perform the active contour (snake) algorithm on an image.
+*
+* This function iteratively adjusts the positions of contour points to align with image features
+* like edges, based on an energy minimization process. The energy terms include continuity,
+* curvature, and image forces.
+*
+* @param magnitude The magnitude of the gradient of the image.
+* @param direction The direction of the gradient of the image.
+* @param contour A reference to a vector of ContourPoint representing the initial contour.
+* @param alpha The weight for the continuity energy term.
+* @param beta The weight for the curvature energy term.
+* @param gamma The weight for the image energy term.
+*/
+void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
 {
-    // Create a zero-initialized matrix with the same size as the input, to store the result
-    Mat res = Mat::zeros(strength.rows, strength.cols, CV_32SC3);
+    int p_cnt = contour.size();
+    vector<ContourPoint> prev_contour(contour);
 
-    // Iterate over the image, avoiding the borders (as the algorithm needs neighboring pixels)
-    for (int j = 1; j < strength.rows - 1; j++)
+    for (int i = 0; i < p_cnt; i++)
     {
-        for (int i = 1; i < strength.cols - 1; i++)
+        // Retrieve previous, current, and next points in the contour
+        ContourPoint pp, p, pn;
+        pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
+        p = prev_contour[i % p_cnt];
+        pn = prev_contour[(i + 1) % p_cnt];
+
+        // Energy terms
+        float e_cont, e_curve, e_image, e_point;
+
+        // Search window settings
+        int s_size = 25, s_offset = s_size / 2;
+        int min_i = 0, min_j = 0;
+        float min_e_point = numeric_limits<float>::max();
+
+        // Search within the window to minimise energy
+        for (int wj = 0; wj < s_size; wj++)
         {
-            // Iterate over each channel (assuming a 3-channel image)
-            for (int k = 0; k < 3; k++)
+            for (int wi = 0; wi < s_size; wi++)
             {
-                // Quantize the direction to one of the four possible angles (0, 45, 90, 135)
-                int dir = quantiseDirection(direction.at<Vec3f>(j, i)[k]);
+                ContourPoint tmp;
 
-                // Retrieve the strength of the neighboring pixels in all 8 directions
-                float neighbour_UL = strength.at<Vec3f>(j - 1, i - 1)[k];
-                float neighbour_UM = strength.at<Vec3f>(j - 1, i)[k];
-                float neighbour_UR = strength.at<Vec3f>(j - 1, i + 1)[k];
-                float neighbour_ML = strength.at<Vec3f>(j, i - 1)[k];
-                float neighbour_CC = strength.at<Vec3f>(j, i)[k]; // Current pixel
-                float neighbour_MR = strength.at<Vec3f>(j, i + 1)[k];
-                float neighbour_DL = strength.at<Vec3f>(j + 1, i - 1)[k];
-                float neighbour_DM = strength.at<Vec3f>(j + 1, i)[k];
-                float neighbour_DR = strength.at<Vec3f>(j + 1, i + 1)[k];
+                // Candidate point within the window
+                tmp.x = p.x - s_offset + wi;
+                tmp.y = p.y - s_offset + wj;
+                int tmp_mag = magnitude.at<Vec3b>((int)tmp.y, (int)tmp.x)[0];
 
-                // Initially set the result pixel to the current strength
-                res.at<Vec3i>(j, i)[k] = (int)neighbour_CC;
+                // Calculate energy terms
+                e_cont = powf32((pn + pp - 2 * tmp).x, 2) + powf32((pn + pp - 2 * tmp).y, 2);
+                e_curve = powf32((tmp - pp).x, 2) + powf32((tmp - pp).y, 2);
+                e_image = -tmp_mag * tmp_mag;
+                e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
 
-                // Depending on the quantized direction, suppress non-maximum pixels
-                // by setting them to zero if they are not the local maxima along the gradient direction
-                switch (dir)
+                // Update if a lower energy point is found
+                if (e_point < min_e_point)
                 {
-                case 0:
-                    if (neighbour_CC <= neighbour_ML || neighbour_CC <= neighbour_MR)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 45:
-                    if (neighbour_CC <= neighbour_UR || neighbour_CC <= neighbour_DL)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 90:
-                    if (neighbour_CC <= neighbour_UM || neighbour_CC <= neighbour_DM)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 135:
-                    if (neighbour_CC <= neighbour_UL || neighbour_CC <= neighbour_DR)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
+                    min_e_point = e_point;
+                    min_i = tmp.x;
+                    min_j = tmp.y;
                 }
             }
         }
-    }
 
-    // Return the resulting image after non-maximum suppression
-    return res;
+        // Update the contour point with the minimum energy point found
+        contour[i].x = min_i;
+        contour[i].y = min_j;
+        contour[i].energy = min_e_point;
+    }
 }
 \end{lstlisting}
 \begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_NMS.png}
-  \caption{Thinned Edge Image}
+    \centering
+      \includegraphics[height=0.4\paperheight]{output/result_img1.jpg}
+    \caption{Contour points calculated from the function (with snake, embedded in picture)}
 \end{figure}
 \clearpage
 
-\subsection{Double Thresholding}
+\subsubsection{Contour Energy Calculation}
 \begin{tabular}{lll}
-  Input  & : & Matrix of Input NMS  \\
-         & : & Low Threshold (Integer)  \\
-         & : & High Threshold (Integer)  \\
-  Output & : & Matrix of Output Image \\
+    Input  & : & List of Contour Point (std::vector\(\langle ContourPoint\rangle\))  \\
+    Output & : & total contour energy (float)   \\
 \end{tabular}
 \begin{lstlisting}
-Mat applyDoubleThresholding(Mat input, int thres_low, int thres_high)
+/**
+* @brief Calculate the total energy of a contour.
+*
+* This function computes the sum of the energy values of each point in the contour.
+* It is useful for evaluating the overall energy of the contour, which can be a measure of its
+* alignment with image features or its smoothness, depending on the energy model used.
+*
+* @param contour A reference to a vector of ContourPoint, each with an associated energy value.
+* @return float The total energy of the contour.
+*/
+float contourEnergy(vector<ContourPoint> &contour)
 {
-    // Create a zero-initialized matrix with the same size as the input, to store the result
-    Mat res = Mat::zeros(input.rows, input.cols, CV_8UC3);
+    float tmp = 0;
+    int cnt = contour.size();
 
-    // Temporary variable to store the intensity of the current pixel
-    int tmp = 0;
-
-    // Iterate over the image, avoiding the borders
-    for (int j = 1; j < input.rows - 1; j++)
+    // Iterate over each point in the contour
+    for (int c = 0; c < cnt; c++)
     {
-        for (int i = 1; i < input.cols - 1; i++)
+        // Check if the energy is not infinity and not the
+        // maximum float value
+        // This is done to ensure that only valid, finite
+        // energy values are summed
+        if (!isinff(contour[c].energy) && contour[c].energy != numeric_limits<float>::max())
         {
-            // Iterate over each channel of the pixel
-            for (int k = 0; k < 3; k++)
-            {
-                // Get the intensity value of the current pixel
-                tmp = input.at<Vec3i>(j, i)[k];
-
-                // If the intensity is higher than the high threshold, mark it as a strong edge (255)
-                if (tmp >= thres_high)
-                {
-                    res.at<Vec3b>(j, i)[k] = 255;
-                }
-                // If the intensity is lower than the low threshold, suppress it (0)
-                else if (tmp < thres_low)
-                {
-                    res.at<Vec3b>(j, i)[k] = 0;
-                }
-                // If the intensity is between the low and high thresholds, mark it as a weak edge (128)
-                else
-                {
-                    res.at<Vec3b>(j, i)[k] = 128;
-                }
-            }
+            // Add the point's energy to the total
+            tmp += contour[c].energy;
         }
     }
 
-    // Return the resulting image after double thresholding
-    return res;
+    return tmp; // Return the total energy of the contour
 }
 \end{lstlisting}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_DTS.png}
-  \caption{Soft and Hard Edge Image}
-\end{figure}
-\clearpage
 
-\subsection{Hysteresis Edge Tracking}
-\begin{tabular}{lll}
-  Input  & : & Matrix of Input Hard and Soft Edge Image  \\
-  Output & : & Matrix of Output Image \\
-\end{tabular}
+\subsubsection{Iteration and Termination Logic}
+This section performed in main function of the program it controls the iteration process by observing 4 latest previous contour energy. If it converge to a single value or oscillate, it is considered as a stable state and terminate iteration. To ensure the oscillation is a true oscillation in global minumum region, not the local minumum region, we also apply counting. It is considered as a global minumum when 20 consequent occurred.
 \begin{lstlisting}
-Mat applyHysteresis(Mat input)
-{
-    // Clone the input image to preserve the original and work on a copy
-    Mat res = input.clone();
+    // We apply termination logic outside the active contour function
+    // it is done by calculate energy over 4 last epochs
+    // if it oscillates or stable, we increase count by 1
+    // The threshold of count is 20 to help avoid local minima
 
-    // Define constants for weak and strong edge values
-    int WEAK = 128, STRONG = 255;
-
-    // Iterate over the image, avoiding the borders
-    for (int j = 1; j < res.rows - 1; j++)
+    contour = initContourPointCircle(magnitude.cols / 2, magnitude.rows / 2, 400, 200);
+    float alpha = 0.05, beta = 0.00001, gamma = 0.5;
+    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0, diff1, diff2, diff3;
+    bool isOscillating = false, isConverging = false;
+    int osc_cnt = 0;
+    vector<Mat> buf;
+    char iter_text[25] = "\0";
+    for (int k = 0; k < 10000; k++)
     {
-        for (int i = 1; i < res.cols - 1; i++)
+        Mat i;
+        activeContour(mag2, dir2, contour, alpha, beta, gamma);
+        current_e = contourEnergy(contour);
+
+        Mat mag_with_field;
+        og_img.copyTo(mag_with_field);
+        i = showSnake(mag_with_field, contour);
+
+        // calculate energy over 4 latest energy to check
+        // if converge or oscillate
+        e_4 = e_3;
+        e_3 = e_2;
+        e_2 = e_1;
+        e_1 = current_e;
+        diff1 = e_2 - e_1;
+        diff2 = e_3 - e_2;
+        diff3 = e_4 - e_3;
+        isOscillating = (diff1 * diff2 < 0) && (diff2 * diff3 < 0);
+        isConverging = std::abs(diff1) == std::abs(diff2) && std::abs(diff2) == std::abs(diff3);
+
+        if (!(isOscillating && isConverging))
         {
-            // Iterate over each channel of the pixel
-            for (int k = 0; k < 3; k++)
+            min_e = current_e;
+            osc_cnt = 0;
+        }
+        else
+        {
+            osc_cnt += 1;
+            // termination condition
+            if (osc_cnt == 20)
             {
-                // Check if the current pixel is a weak edge
-                if (res.at<Vec3b>(j, i)[k] == WEAK)
-                {
-                    // Initialize a flag to check if the weak edge is connected to a strong edge
-                    bool connected = false;
 
-                    // Check the 8 neighboring pixels to see if any of them is a strong edge
-                    for (int dj = -1; dj <= 1; ++dj)
-                    {
-                        for (int di = -1; di <= 1; ++di)
-                        {
-                            // Skip the current pixel
-                            if (di == 0 && dj == 0)
-                                continue;
-
-                            // If a strong edge is found in the neighborhood, set the flag
-                            if (res.at<Vec3b>(j + dj, i + di)[k] == STRONG)
-                            {
-                                connected = true;
-                                break;
-                            }
-                        }
-                        if (connected)
-                            break;
-                    }
-
-                    // If the weak edge is connected to a strong edge, strengthen it; otherwise, suppress it
-                    res.at<Vec3b>(j, i)[k] = connected ? STRONG : 0;
-                }
+                snprintf(iter_text, 24, "Iteration: %d", k);
+                putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+                printf("Frame %d %f\n", k, min_e);
+                snprintf(out_file, MAX_LEN, "%s/%s/result_%s.%s", BASE_PATH, OUT_PATH, FILENAME, EXT);
+                imwrite(out_file, i);
+                imshow("Original", i);
+                video.write(i);
+                video.release();
+                waitKey(10);
+                break;
             }
         }
-    }
 
-    // Return the resulting image after applying hysteresis
-    return res;
-}
+        if (k % 10 == 0)
+        {
+            snprintf(iter_text, 24, "Iteration: %d", k);
+            putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+            imshow("Original", i);
+            video.write(i);
+            waitKey(10);
+        }
+    }
 \end{lstlisting}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{output/img2_q2_HYS.png}
-  \caption{Hard Edge Image}
-\end{figure}
-\clearpage
 
-\section{Hough Transform}
-After get the line, we need to add to image later
-\begin{tabular}{lll}
-  Input  & : & Matrix of Input Edge Strength  \\
-         & : & List to store line (Vector) \\
-         & : & Rho step (Float)\\
-         & : & Theta step (Float) \\
-         & : & Threshold (Integer)\\
-\end{tabular}
-\begin{lstlisting}
-void applyHoughTransform(cv::Mat edges, std::vector<cv::Vec2f> &lines, float rho, float theta, int threshold)
-{
-    // Get the dimensions of the edges image
-    int width = edges.cols;
-    int height = edges.rows;
-
-    // Calculate the maximum distance (rho) possible in the image
-    int rho_max = (int)(std::sqrt(width * width + height * height));
-
-    // Calculate the maximum number of bins for theta
-    int theta_max = (int)(CV_PI / theta);
-
-    // Create the accumulator matrix initialized to zero
-    cv::Mat accum = cv::Mat::zeros(2 * rho_max, theta_max, CV_32S);
-
-    // Iterate over the pixels of the edges image
-    for (int y = 0; y < edges.rows; y++)
-    {
-        for (int x = 0; x < edges.cols; x++)
-        {
-            // Check if the current pixel is part of an edge
-            if (edges.at<Vec3b>(y, x)[0] > 0)
-            {
-                // For each angle theta, calculate the corresponding rho value
-                for (int t = 0; t < theta_max; t++)
-                {
-                    double current_theta = (t * theta);
-
-                    // Calculate rho for the current (x, y) point and theta
-                    double rho_val = cvRound((x * std::cos(current_theta)) + (y * std::sin(current_theta)));
-                    int rho_index = (int)((rho_val / rho) + rho_max);
-
-                    // Increment the accumulator's bin if the index is valid
-                    if (rho_index >= 0 && rho_index < 2 * rho_max)
-                    {
-                        accum.at<int>(rho_index, t)++;
-                    }
-                }
-            }
-        }
-    }
-
-    // Iterate over the accumulator to find local maxima (lines)
-    for (int r = 0; r < 2 * rho_max; r++)
-    {
-        for (int t = 0; t < theta_max; t++)
-        {
-            // If the bin's value is above the threshold, it is considered a line
-            if (accum.at<int>(r, t) >= threshold)
-            {
-                // Convert (rho, theta) from accumulator space to image space and add to the lines vector
-                lines.push_back(cv::Vec2f(r * rho - rho_max, t * theta));
-            }
-        }
-    }
-}  
-\end{lstlisting}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=0.4\paperheight]{result_img/img2_q3.png}
-  \caption{Hough Transform Image}
-\end{figure}
 \clearpage
 
 
 
 \chapter{Discussion}
 \section{Observations}
-\subsection{Parameters in Gaussian Filter}
+\subsection{Gaussian Filter Affects the Active Contour Algorithm}
 \paragraph*{}
-Sigma affects the output directly. Lower sigma tends to give more weight to the center of kernel. On the other hand, Higher distributes weight more. Kernel size also affect the output depends on sigma. For instance, using K=3 and sigma=1.0, the sum of weight is only 0.73, which is affect the result brightness as shown below. Higher sigma with small kernel will give darker image.
-\begin{figure}[!htb]
-  \begin{minipage}{\linewidth}
-    \centering
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q1_K3_SIG_0.5.png}
-      \subcaption{sigma=0.5}
-    \end{subfigure}
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q1_K3_SIG_1.0.png}
-      \subcaption{sigma=1}
-    \end{subfigure}
-    
+Gaussian blur is a method used in the active contour algorithm to smooth out images. It helps by reducing noise and removing rough edges and unnecessary details. This smoothing makes it easier for the algorithm to identify and track the outlines of objects in an image. However, it's important not to use too much Gaussian blur. If the image becomes overly blurred, the algorithm can become slower and lose important details. This loss of detail can make the algorithm less accurate in recognizing the shapes and features of the image. Therefore, it's crucial to use just the right amount of Gaussian blur to keep the algorithm working well.
+\subsection{Clamping Affects Performance}
+\paragraph*{}
 
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q1_K3_SIG_1.5.png}
-      \subcaption{sigma=1.5}
-    \end{subfigure}
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q1_K3_SIG_2.0.png}
-      \subcaption{sigma=2}
-    \end{subfigure}
+\subsection{Gradient Vector Field}
+\paragraph*{}
 
-    \caption{Comparison of sigma on output brightness}
-  \end{minipage}
-
-\end{figure}
+\subsection{Contour Point Searching Window Size}
+\paragraph*{}
+After conducting multiple experiments to address a specific problem, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.\\
+On the other hand, a window that's too large risks overlooking important features. Larger windows encompass more of the image, which can dilute the significance of smaller, yet critical features. This can cause the algorithm to miss subtle but essential details, as it focuses on broader trends over smaller, localized variations. In essence, the window size acts as a balancing factor. It must be large enough to capture sufficient context for accurate analysis but not so large that it overlooks finer details. Adjusting this parameter based on the feature gap and intensity ensures the algorithm remains sensitive to important details while maintaining processing efficiency.
 
 
 % \begin{figure}[!htb]
@@ -1003,28 +971,28 @@ Sigma affects the output directly. Lower sigma tends to give more weight to the 
 Small angle step tends to over detect new line, while too high angle step will give inaccurate result as shown below.
 
 \begin{figure}[!htb]
-  \begin{minipage}{\linewidth}
-    \centering
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_1_THRES_50.png}
-      \subcaption{Theta = 1 deg}
-    \end{subfigure}
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_3_THRES_50.png}
-      \subcaption{Theta = 3 deg}
-    \end{subfigure}
+    \begin{minipage}{\linewidth}
+        \centering
+        \begin{subfigure}{0.49\textwidth}
+            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_1_THRES_50.png}
+            \subcaption{Theta = 1 deg}
+        \end{subfigure}
+        \begin{subfigure}{0.49\textwidth}
+            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_3_THRES_50.png}
+            \subcaption{Theta = 3 deg}
+        \end{subfigure}
 
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_5_THRES_50.png}
-      \subcaption{Theta = 5 deg}
-    \end{subfigure}
-    \begin{subfigure}{0.49\textwidth}
-      \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_10_THRES_50.png}
-      \subcaption{Theta = 10 deg}
-    \end{subfigure}
+        \begin{subfigure}{0.49\textwidth}
+            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_5_THRES_50.png}
+            \subcaption{Theta = 5 deg}
+        \end{subfigure}
+        \begin{subfigure}{0.49\textwidth}
+            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_10_THRES_50.png}
+            \subcaption{Theta = 10 deg}
+        \end{subfigure}
 
-    \caption{Comparison of Angle step affect line detection}
-  \end{minipage}
+        \caption{Comparison of Angle step affect line detection}
+    \end{minipage}
 
 \end{figure}
 % \begin{figure}[!htb]
@@ -1116,187 +1084,188 @@ URL: \url{https://github.com/chinatip-l/computer-vision-lab-fall-2023}
 
 \chapter{Source Code: main.cpp}
 \begin{lstlisting}
-  #include <stdio.h>
-  #include <opencv2/opencv.hpp>
-  #include <unistd.h>
-  #include <string.h>
-  #include "include/func.hpp"
-  
-  #define MAX_LEN 250
-  // // path for personal computer
-  // #define BASE_PATH "/home/chinatip/work/computer_vision/homework3"
-  
-  // path for lab
-  #define BASE_PATH "/home/chinatip/computer-vision-lab-fall-2023/homework3"
-  #define SRC_PATH "test_img"
-  #define OUT_PATH "output"
-  
-  // define file name, can uncomment to select the input
-  #define FILENAME "img1"
-  // #define FILENAME "img2"
-  // #define FILENAME "img3"
-  #define GAUSSIAN_FILT_SUFX "q1"
-  #define CANNY_EDGE_SUFX "q2"
-  #define HOUGH_SUFX "q3"
-  #define KER_INFO_3 "K3P1"
-  #define KER_INFO_5 "K5P2"
-  #define KER_INFO_7 "K7P3"
-  #define EXT "png"
-  
-  using namespace cv;
-  
-  Mat canvas;
-  
-  void appendImgToCanvas(Mat);
-  
-  int main(int argc, char **argv)
-  {
-  
-      Mat og_img;
-      char og_file[MAX_LEN] = "", out_file[MAX_LEN] = "";
-      snprintf(og_file, MAX_LEN, "%s/%s/%s.%s", BASE_PATH, SRC_PATH, FILENAME, EXT);
-  
-      og_img = imread(og_file);
-  
-      if (!og_img.data)
-      {
-          printf("No image data \n");
-          return -1;
-      }
-      else
-      {
-          printf("Original Img Size: w x h %d x %d\n", og_img.cols, og_img.rows);
-      }
-  
-      appendImgToCanvas(og_img);
-      Mat bw_img;
-      bw_img = applyGreyscaleFilter(og_img);
-  
-      Mat res_img, selected_img;
-      int kernel_size;
-      float sigma;
-      for (sigma = 0.5; sigma <= 2; sigma += 0.5)
-      {
-          for (kernel_size = 3; kernel_size <= 7; kernel_size += 2)
-          {
-              Mat gaussian_filter = createGaussianFilter(kernel_size, sigma);
-              res_img = applyFilter(bw_img, gaussian_filter, 1, false);
-              printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
-              snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_K%d_SIG_%.1f.%s", BASE_PATH, OUT_PATH, FILENAME, GAUSSIAN_FILT_SUFX, kernel_size, sigma, EXT);
-              imwrite(out_file, res_img);
-              if (sigma == 1.0 && kernel_size == 5)
-              {
-                  selected_img = res_img.clone();
-              }
-          }
-      }
-      // appendImgToCanvas(selected_img);
-  
-      Mat sobelx;
-      sobelx = applySobelX(selected_img);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_X.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, sobelx);
-      // appendImgToCanvas(sobelx);
-  
-      Mat sobely;
-      sobely = applySobelY(selected_img);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_SOBEL_Y.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, sobely);
-      // appendImgToCanvas(sobely);
-  
-      Mat edge_strength;
-      edge_strength = calculateEdgeStrength(sobelx, sobely);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_STRENGTH.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, edge_strength);
-      // appendImgToCanvas(edge_strength);
-  
-      Mat edge_direction;
-      edge_direction = calculateEdgeDirection(sobelx, sobely);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_EDGE_DIR.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, edge_direction);
-      // appendImgToCanvas(edge_direction);
-  
-      Mat nms;
-      nms = calculateNonMaximumSuppression(edge_strength, edge_direction);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_NMS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, nms);
-      // appendImgToCanvas(nms);
-  
-      Mat double_thresholed;
-      double_thresholed = applyDoubleThresholding(nms, 10, 20);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_DTS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, double_thresholed);
-      // appendImgToCanvas(double_thresholed);
-  
-      Mat hyst;
-      hyst = applyHysteresis(double_thresholed);
-      snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HYS.%s", BASE_PATH, OUT_PATH, FILENAME, CANNY_EDGE_SUFX, EXT);
-      imwrite(out_file, hyst);
-      appendImgToCanvas(hyst);
-  
-      // make a copy of hysteresis to use as result
-      Mat hough = hyst.clone();
-      std::vector<cv::Vec2f> ulines;
-  
-      // Parameters for Hough Transform
-      float rho = 1; // distance resolution in pixels
-      int theta_steps[] = {1, 3, 5, 10};
-      int thresholds[] = { 35, 50, 75};
-      for (int step_theta = 0; step_theta < 4; step_theta++)
-      {
-          for (int step_threshold = 0; step_threshold < 3; step_threshold++)
-          {
-              float theta = theta_steps[step_theta] * CV_PI / 180;
-              int threshold = thresholds[step_threshold];
-              // reset image
-              hough = hyst.clone();
-  
-              // Apply Hough Transform
-              applyHoughTransform(hyst, ulines, rho, theta, threshold);
-  
-              // Draw the lines on the original image
-              for (size_t i = 0; i < ulines.size(); i++)
-              {
-                  float r = ulines[i][0], t = ulines[i][1];
-                  double cos_t = std::cos(t), sin_t = std::sin(t);
-                  double x0 = r * cos_t, y0 = r * sin_t;
-                  double alpha = 2000; // length that the line will be drawn to cover the image
-  
-                  // Adjust the start and end points for the new origin at the center of the image
-                  cv::Point pt1(cvRound(x0 + alpha * (-sin_t)), cvRound(y0 + alpha * cos_t));
-                  cv::Point pt2(cvRound(x0 - alpha * (-sin_t)), cvRound(y0 - alpha * cos_t));
-                  cv::line(hough, pt1, pt2, cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-              }
-              snprintf(out_file, MAX_LEN, "%s/%s/%s_%s_HOUGH_THETA_%d_THRES_%d.%s", BASE_PATH, OUT_PATH, FILENAME, HOUGH_SUFX,theta_steps[step_theta],threshold, EXT);
-              imwrite(out_file, hough);
-              if(threshold==75 && step_theta==0)
-                  appendImgToCanvas(hough);
-              // appendImgToCanvas(hough);
-              ulines.clear();
-          }
-      }
-  
-      namedWindow("Original", WINDOW_AUTOSIZE);
-  
-      imshow("Original", canvas);
-      waitKey(0);
-      return 0;
-  }
-  
-  void appendImgToCanvas(Mat img)
-  {
-      if (canvas.empty())
-      {
-          canvas = img;
-      }
-      else
-      {
-          Size s(canvas.cols + img.cols + 5, canvas.rows > img.rows ? canvas.rows : img.rows);
-          size_t old_w = canvas.cols;
-          copyMakeBorder(canvas, canvas, 0, 0, 0, img.cols + 5, BORDER_CONSTANT, Scalar(0, 0, 0, 0));
-          img.copyTo(canvas(Rect(old_w + 5, 0, img.cols, img.rows)));
-      }
-  }  
+#include <stdio.h>
+#include <opencv2/opencv.hpp>
+#include <unistd.h>
+#include <string.h>
+#include "include/func.hpp"
+#include <opencv2/videoio/videoio_c.h>
+
+#define MAX_LEN 250
+
+// path for lab
+#define BASE_PATH "/home/chinatip/computer-vision-lab-fall-2023/homework4"
+#define SRC_PATH "test_img"
+#define OUT_PATH "output"
+
+// define file name, can uncomment to select the input
+#define FILENAME "img1"
+// #define FILENAME "img2"
+// #define FILENAME "img3"
+
+#define EXT "jpg"
+
+Mat canvas;
+
+void appendImgToCanvas(Mat);
+
+int main(int argc, char **argv)
+{
+
+    Mat og_img;
+    char og_file[MAX_LEN] = "", out_file[MAX_LEN] = "";
+    snprintf(og_file, MAX_LEN, "%s/%s/%s.%s", BASE_PATH, SRC_PATH, FILENAME, EXT);
+
+    og_img = imread(og_file);
+
+    if (!og_img.data)
+    {
+        printf("No image data \n");
+        return -1;
+    }
+    else
+    {
+        printf("Original Img Size: w x h %d x %d\n", og_img.cols, og_img.rows);
+    }
+
+    appendImgToCanvas(og_img);
+    Mat bw_img;
+    bw_img = applyGreyscaleFilter(og_img);
+
+    Mat res_img, selected_img;
+
+    Mat gaussian_filter = createGaussianFilter(3, 1);
+    res_img = applyFilter(bw_img, gaussian_filter, 1, false);
+    printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
+
+    appendImgToCanvas(res_img);
+
+    Mat sobelx;
+    sobelx = applySobelX(res_img);
+    appendImgToCanvas(sobelx);
+
+    Mat sobely;
+    sobely = applySobelY(res_img);
+    appendImgToCanvas(sobely);
+
+    Mat magnitude;
+    magnitude = calculateEdgeStrength(sobelx, sobely);
+
+    Mat direction;
+    direction = calculateEdgeDirection(sobelx, sobely);
+
+    Mat output;
+    magnitude.copyTo(output);
+    showGradient(output, magnitude, direction, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/first_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
+
+    Mat mag2, dir2, dx, dy, res;
+    dx = applySobelX(magnitude);
+    dy = applySobelY(magnitude);
+    mag2 = calculateEdgeStrength(dx, dy);
+    dir2 = calculateEdgeDirection(dx, dy);
+
+    mag2.copyTo(output);
+    showGradient(output, mag2, dir2, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/second_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
+
+    vector<ContourPoint> contour;
+
+    VideoWriter video;
+    char video_name[100] = "\0";
+    snprintf(video_name, 99, "%s/%s/vid_%s.mp4", BASE_PATH, OUT_PATH, FILENAME);
+    video.open(video_name, CV_FOURCC('m', 'p', '4', 'v'), 10, og_img.size(), true);
+
+    // We apply termination logic outside the active contour function
+    // it is done by calculate energy over 4 last epochs
+    // if it oscillates or stable, we increase count by 1
+    // The threshold of count is 20 to help avoid local minima
+
+    contour = initContourPointCircle(magnitude.cols / 2, magnitude.rows / 2, 400, 200);
+    float alpha = 0.05, beta = 0.00001, gamma = 0.5;
+    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0, diff1, diff2, diff3;
+    bool isOscillating = false, isConverging = false;
+    int osc_cnt = 0;
+    vector<Mat> buf;
+    char iter_text[25] = "\0";
+    for (int k = 0; k < 10000; k++)
+    {
+        Mat i;
+        activeContour(mag2, dir2, contour, alpha, beta, gamma);
+        current_e = contourEnergy(contour);
+
+        Mat mag_with_field;
+        og_img.copyTo(mag_with_field);
+        i = showSnake(mag_with_field, contour);
+
+        // calculate energy over 4 latest energy to check
+        // if converge or oscillate
+        e_4 = e_3;
+        e_3 = e_2;
+        e_2 = e_1;
+        e_1 = current_e;
+        diff1 = e_2 - e_1;
+        diff2 = e_3 - e_2;
+        diff3 = e_4 - e_3;
+        isOscillating = (diff1 * diff2 < 0) && (diff2 * diff3 < 0);
+        isConverging = std::abs(diff1) == std::abs(diff2) && std::abs(diff2) == std::abs(diff3);
+
+        if (!(isOscillating && isConverging))
+        {
+            min_e = current_e;
+            osc_cnt = 0;
+        }
+        else
+        {
+            osc_cnt += 1;
+            // termination condition
+            if (osc_cnt == 20)
+            {
+
+                snprintf(iter_text, 24, "Iteration: %d", k);
+                putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+                printf("Frame %d %f\n", k, min_e);
+                snprintf(out_file, MAX_LEN, "%s/%s/result_%s.%s", BASE_PATH, OUT_PATH, FILENAME, EXT);
+                imwrite(out_file, i);
+                imshow("Original", i);
+                video.write(i);
+                video.release();
+                waitKey(10);
+                break;
+            }
+        }
+
+        if (k % 10 == 0)
+        {
+            snprintf(iter_text, 24, "Iteration: %d", k);
+            putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
+            imshow("Original", i);
+            video.write(i);
+            waitKey(10);
+        }
+    }
+    printf("Finish\n");
+    waitKey(0);
+    return 0;
+}
+
+void appendImgToCanvas(Mat img)
+{
+    if (canvas.empty())
+    {
+        canvas = img;
+    }
+    else
+    {
+        Size s(canvas.cols + img.cols + 5, canvas.rows > img.rows ? canvas.rows : img.rows);
+        size_t old_w = canvas.cols;
+        copyMakeBorder(canvas, canvas, 0, 0, 0, img.cols + 5, BORDER_CONSTANT, Scalar(0, 0, 0, 0));
+        img.copyTo(canvas(Rect(old_w + 5, 0, img.cols, img.rows)));
+    }
+}
+
 \end{lstlisting}
 
 \chapter{Source Code: func.hpp}
@@ -1308,29 +1277,144 @@ URL: \url{https://github.com/chinatip-l/computer-vision-lab-fall-2023}
 #include <vector>
 
 using namespace cv;
+using namespace std;
 
-Mat applyGreyscaleFilter(Mat);
-float calculateGaussian(int,int,float);
+/**
+* @brief Class representing a point with additional energy attribute.
+*
+* Inherits from OpenCV's Point2f class and adds an energy attribute.
+* This can be used to represent points in an image with an associated energy value.
+*/
+class ContourPoint : public Point2f
+{
+public:
+float energy; ///< Energy value of the contour point.
+};
 
-Mat createGaussianFilter(int,float);
+/**
+* @brief Applies a greyscale filter to an image.
+*
+* @param image The source image to be converted.
+* @return Grayscale version of the input image.
+*/
+Mat applyGreyscaleFilter(Mat image);
 
-Mat applyFilter(Mat , Mat , int ,bool);
+/**
+* @brief Calculates Gaussian value for given coordinates and sigma.
+*
+* @param x X-coordinate.
+* @param y Y-coordinate.
+* @param sigma Standard deviation of the Gaussian function.
+* @return Gaussian value for the specified coordinates and sigma.
+*/
+float calculateGaussian(int x, int y, float sigma);
 
-Mat applySobelX(Mat);
-Mat applySobelY(Mat);
+/**
+* @brief Creates a Gaussian filter kernel of a specified size and sigma.
+*
+* @param size Size of the Gaussian filter (typically odd number).
+* @param sigma Standard deviation of the Gaussian.
+* @return Gaussian filter as a Mat object.
+*/
+Mat createGaussianFilter(int size, float sigma);
 
-Mat calculateEdgeStrength(Mat , Mat );
-Mat calculateEdgeDirection(Mat , Mat );
+/**
+* @brief Applies a filter to an image with optional border suppression.
+*
+* @param image The source image.
+* @param kernel The filter kernel.
+* @param stride Stride for the convolution.
+* @param suppress_border If true, suppresses the border effects.
+* @return The filtered image.
+*/
+Mat applyFilter(Mat image, Mat kernel, int stride, bool suppress_border);
 
-int quantiseDirection(float);
-Mat calculateNonMaximumSuppression(Mat , Mat ) ;
+/**
+* @brief Applies the Sobel operator in the X direction.
+*
+* @param image The source image.
+* @return Image after applying the Sobel X operator.
+*/
+Mat applySobelX(Mat image);
 
-Mat applyDoubleThresholding(Mat ,int ,int );
-Mat applyHysteresis(Mat);
+/**
+* @brief Applies the Sobel operator in the Y direction.
+*
+* @param image The source image.
+* @return Image after applying the Sobel Y operator.
+*/
+Mat applySobelY(Mat image);
 
-void applyHoughTransform(cv::Mat, std::vector<cv::Vec2f>& , float , float , int );
+/**
+* @brief Calculates the edge strength from gradient images.
+*
+* @param grad_x Gradient image in the X direction.
+* @param grad_y Gradient image in the Y direction.
+* @return Edge strength image.
+*/
+Mat calculateEdgeStrength(Mat grad_x, Mat grad_y);
 
-#endif
+/**
+* @brief Calculates the edge direction from gradient images.
+*
+* @param grad_x Gradient image in the X direction.
+* @param grad_y Gradient image in the Y direction.
+* @return Edge direction image.
+*/
+Mat calculateEdgeDirection(Mat grad_x, Mat grad_y);
+
+/**
+* @brief Initialises contour points in a circular pattern.
+*
+* @param cx X-coordinate of the circle center.
+* @param cy Y-coordinate of the circle center.
+* @param r Radius of the circle.
+* @param quantity Number of contour points to generate.
+* @return Vector of initialised contour points.
+*/
+vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity);
+
+/**
+* @brief Implements the active contour model (snake) algorithm.
+*
+* @param magnitude Magnitude of the gradient.
+* @param direction Direction of the gradient.
+* @param contour Reference to a vector of ContourPoints representing the snake.
+* @param alpha Weight for continuity energy.
+* @param beta Weight for curvature energy.
+* @param gamma Weight for image energy.
+*/
+void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma);
+
+/**
+* @brief Calculates the total energy of a contour.
+*
+* @param contour Vector of ContourPoints.
+* @return Total energy of the contour.
+*/
+float contourEnergy(vector<ContourPoint> &contour);
+
+/**
+* @brief Visualises the snake on an image.
+*
+* @param image The source image.
+* @param contour Vector of ContourPoints representing the snake.
+* @return Image with the snake visualised.
+*/
+Mat showSnake(Mat image, vector<ContourPoint> contour);
+
+/**
+* @brief Displays gradient information on an image.
+*
+* @param image Reference to the source image.
+* @param magnitude Gradient magnitude.
+* @param direction Gradient direction.
+* @param stride Stride for visualization.
+*/
+void showGradient(Mat &image, Mat magnitude, Mat direction, int stride);
+
+#endif // _FUNC_H_
+
 \end{lstlisting}
 
 \chapter{Source Code: func.cpp}
@@ -1338,6 +1422,8 @@ void applyHoughTransform(cv::Mat, std::vector<cv::Vec2f>& , float , float , int 
 #include "include/func.hpp"
 #include <vector>
 #include <cmath>
+#include <limits>
+
 const double K_E = std::exp(1.0);
 
 Mat applyGreyscaleFilter(Mat img)
@@ -1465,7 +1551,8 @@ Mat applyFilter(Mat img, Mat kernel, int stride, bool suppress_border)
     {
         for (int img_i = 0; img_i < img.cols; img_i += stride)
         {
-            // check if it is a border and suppress border if selected
+            // check if it is a border and suppress border
+            // if selected
             if (img_i < ker_w || img_j < ker_h || img_i > img.cols - ker_h - 1 || img_j > img.rows - ker_h - 1)
             {
                 if (suppress_border)
@@ -1525,16 +1612,16 @@ Mat applySobelX(Mat img_in)
 Mat applySobelY(Mat img_in)
 {
     float c_sobelY[] = {-1, -2, -1,
-                          0,  0,  0,
-                          1,  2,  1};
+                        0, 0, 0,
+                        1, 2, 1};
     Mat sobelY(3, 3, CV_32F, c_sobelY);
     Mat result = applyFilter(img_in, sobelY, 1, true);
     return result;
 }
 
-Mat calculateEdgeStrength(Mat x, Mat y)
+Mat calculateEdgeStrength(Mat grad_x, Mat grad_y)
 {
-    Mat strength = Mat::zeros(x.rows, x.cols, CV_32FC3);
+    Mat strength = Mat::zeros(grad_x.rows, grad_x.cols, CV_8UC3);
     float tmp = 0;
     for (int j = 0; j < strength.rows; j += 1)
     {
@@ -1544,8 +1631,20 @@ Mat calculateEdgeStrength(Mat x, Mat y)
             {
                 // Strength of pixel is calculated by
                 // sqrt(gx^2 + gy^2)
-                tmp = (x.at<Vec3i>(j, i)[k] * x.at<Vec3i>(j, i)[k]) + (y.at<Vec3i>(j, i)[k] * y.at<Vec3i>(j, i)[k]);
-                strength.at<Vec3f>(j, i)[k] = sqrtf32(tmp);
+                tmp = (grad_x.at<Vec3i>(j, i)[k] * grad_x.at<Vec3i>(j, i)[k]) + (grad_y.at<Vec3i>(j, i)[k] * grad_y.at<Vec3i>(j, i)[k]);
+                tmp = round(sqrtf32(tmp));
+
+                // add clipping criteria in case of over 255
+                // and lower bound for suppressing soft area
+                if (tmp > 255)
+                {
+                    tmp = 255;
+                }
+                if (tmp < 50)
+                {
+                    tmp = 0;
+                }
+                strength.at<Vec3b>(j, i)[k] = (int)tmp;
             }
         }
     }
@@ -1553,9 +1652,9 @@ Mat calculateEdgeStrength(Mat x, Mat y)
     return strength;
 }
 
-Mat calculateEdgeDirection(Mat x, Mat y)
+Mat calculateEdgeDirection(Mat grad_x, Mat grad_y)
 {
-    Mat direction = Mat::zeros(x.rows, x.cols, CV_32FC3);
+    Mat direction = Mat::zeros(grad_x.rows, grad_x.cols, CV_32FC3);
     for (int j = 0; j < direction.rows; j += 1)
     {
         for (int i = 0; i < direction.cols; i += 1)
@@ -1564,280 +1663,222 @@ Mat calculateEdgeDirection(Mat x, Mat y)
             {
                 // direction of pixel is calculated by
                 // atan(y/x)
-                direction.at<Vec3f>(j, i)[k] = atan2f32(y.at<Vec3f>(j, i)[k], x.at<Vec3f>(j, i)[k]) * 10;
+                direction.at<Vec3f>(j, i)[k] = atan2f32(grad_y.at<Vec3i>(j, i)[k], grad_x.at<Vec3i>(j, i)[k]);
             }
         }
     }
     return direction;
 }
 
-int quantiseDirection(float angle)
+/**
+    * @brief Initialise contour points in a circular pattern.
+    *
+    * This function creates a set of contour points arranged in the shape of a circle.
+    * It is useful for initializing contour-based algorithms, especially for circular objects.
+    *
+    * @param cx The x-coordinate of the circle's center.
+    * @param cy The y-coordinate of the circle's center.
+    * @param r The radius of the circle.
+    * @param quantity The number of contour points to generate.
+    * @return vector<ContourPoint> A vector of contour points arranged in a circular pattern.
+    */
+vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
 {
-    // convert radiant to degree
-    angle = angle * 180 / CV_PI;
+    vector<ContourPoint> tmp;
+    float theta = 0, d_theta = (2 * CV_PI) / quantity;
 
-    // quantise to 4 axes 
-    if ((angle >= 0 && angle < 22.5) || (angle >= 157.5 && angle <= 180))
+    for (int i = 0; i < quantity; i++)
     {
-        return 0;
+        float x, y;
+        // Calculate the x and y coordinates using polar to
+        // Cartesian conversion
+        x = (r * cosf32(theta)) + cx;
+        y = (r * sinf32(theta)) + cy;
+
+        // Create a ContourPoint and set its properties
+        ContourPoint p;
+        p.x = x;
+        p.y = y;
+
+        // Since we try to minimise the energy, we initialise
+        // the energy to the maximum float value
+        p.energy = numeric_limits<float>::max();
+
+        // Add the ContourPoint to the vector
+        tmp.push_back(p);
+        theta += d_theta;
     }
-    else if (angle >= 22.5 && angle < 67.5)
-    {
-        return 45;
-    }
-    else if (angle >= 67.5 && angle < 112.5)
-    {
-        return 90;
-    }
-    else if (angle >= 112.5 && angle < 157.5)
-    {
-        return 135;
-    }
-    else
-    {
-        return 0;
-    }
+
+    // Return the vector of contour points
+    return tmp;
 }
 
-Mat calculateNonMaximumSuppression(cv::Mat strength, cv::Mat direction)
+/**
+    * @brief Perform the active contour (snake) algorithm on an image.
+    *
+    * This function iteratively adjusts the positions of contour points to align with image features
+    * like edges, based on an energy minimization process. The energy terms include continuity,
+    * curvature, and image forces.
+    *
+    * @param magnitude The magnitude of the gradient of the image.
+    * @param direction The direction of the gradient of the image.
+    * @param contour A reference to a vector of ContourPoint representing the initial contour.
+    * @param alpha The weight for the continuity energy term.
+    * @param beta The weight for the curvature energy term.
+    * @param gamma The weight for the image energy term.
+    */
+void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
 {
-    // Create a zero-initialized matrix with the same size as the input, to store the result
-    Mat res = Mat::zeros(strength.rows, strength.cols, CV_32SC3);
+    int p_cnt = contour.size();
+    vector<ContourPoint> prev_contour(contour);
 
-    // Iterate over the image, avoiding the borders (as the algorithm needs neighboring pixels)
-    for (int j = 1; j < strength.rows - 1; j++)
+    for (int i = 0; i < p_cnt; i++)
     {
-        for (int i = 1; i < strength.cols - 1; i++)
+        // Retrieve previous, current, and next points in the contour
+        ContourPoint pp, p, pn;
+        pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
+        p = prev_contour[i % p_cnt];
+        pn = prev_contour[(i + 1) % p_cnt];
+
+        // Energy terms
+        float e_cont, e_curve, e_image, e_point;
+
+        // Search window settings
+        int s_size = 25, s_offset = s_size / 2;
+        int min_i = 0, min_j = 0;
+        float min_e_point = numeric_limits<float>::max();
+
+        // Search within the window to minimise energy
+        for (int wj = 0; wj < s_size; wj++)
         {
-            // Iterate over each channel (assuming a 3-channel image)
-            for (int k = 0; k < 3; k++)
+            for (int wi = 0; wi < s_size; wi++)
             {
-                // Quantize the direction to one of the four possible angles (0, 45, 90, 135)
-                int dir = quantiseDirection(direction.at<Vec3f>(j, i)[k]);
+                ContourPoint tmp;
 
-                // Retrieve the strength of the neighboring pixels in all 8 directions
-                float neighbour_UL = strength.at<Vec3f>(j - 1, i - 1)[k];
-                float neighbour_UM = strength.at<Vec3f>(j - 1, i)[k];
-                float neighbour_UR = strength.at<Vec3f>(j - 1, i + 1)[k];
-                float neighbour_ML = strength.at<Vec3f>(j, i - 1)[k];
-                float neighbour_CC = strength.at<Vec3f>(j, i)[k]; // Current pixel
-                float neighbour_MR = strength.at<Vec3f>(j, i + 1)[k];
-                float neighbour_DL = strength.at<Vec3f>(j + 1, i - 1)[k];
-                float neighbour_DM = strength.at<Vec3f>(j + 1, i)[k];
-                float neighbour_DR = strength.at<Vec3f>(j + 1, i + 1)[k];
+                // Candidate point within the window
+                tmp.x = p.x - s_offset + wi;
+                tmp.y = p.y - s_offset + wj;
+                int tmp_mag = magnitude.at<Vec3b>((int)tmp.y, (int)tmp.x)[0];
 
-                // Initially set the result pixel to the current strength
-                res.at<Vec3i>(j, i)[k] = (int)neighbour_CC;
+                // Calculate energy terms
+                e_cont = powf32((pn + pp - 2 * tmp).x, 2) + powf32((pn + pp - 2 * tmp).y, 2);
+                e_curve = powf32((tmp - pp).x, 2) + powf32((tmp - pp).y, 2);
+                e_image = -tmp_mag * tmp_mag;
+                e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
 
-                // Depending on the quantized direction, suppress non-maximum pixels
-                // by setting them to zero if they are not the local maxima along the gradient direction
-                switch (dir)
+                // Update if a lower energy point is found
+                if (e_point < min_e_point)
                 {
-                case 0:
-                    if (neighbour_CC <= neighbour_ML || neighbour_CC <= neighbour_MR)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 45:
-                    if (neighbour_CC <= neighbour_UR || neighbour_CC <= neighbour_DL)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 90:
-                    if (neighbour_CC <= neighbour_UM || neighbour_CC <= neighbour_DM)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
-                case 135:
-                    if (neighbour_CC <= neighbour_UL || neighbour_CC <= neighbour_DR)
-                        res.at<Vec3f>(j, i)[k] = 0;
-                    break;
+                    min_e_point = e_point;
+                    min_i = tmp.x;
+                    min_j = tmp.y;
                 }
             }
         }
-    }
 
-    // Return the resulting image after non-maximum suppression
-    return res;
+        // Update the contour point with the minimum energy point found
+        contour[i].x = min_i;
+        contour[i].y = min_j;
+        contour[i].energy = min_e_point;
+    }
 }
 
-Mat applyDoubleThresholding(Mat input, int thres_low, int thres_high)
+/**
+    * @brief Calculate the total energy of a contour.
+    *
+    * This function computes the sum of the energy values of each point in the contour.
+    * It is useful for evaluating the overall energy of the contour, which can be a measure of its
+    * alignment with image features or its smoothness, depending on the energy model used.
+    *
+    * @param contour A reference to a vector of ContourPoint, each with an associated energy value.
+    * @return float The total energy of the contour.
+    */
+float contourEnergy(vector<ContourPoint> &contour)
 {
-    // Create a zero-initialized matrix with the same size as the input, to store the result
-    Mat res = Mat::zeros(input.rows, input.cols, CV_8UC3);
+    float tmp = 0;
+    int cnt = contour.size();
 
-    // Temporary variable to store the intensity of the current pixel
-    int tmp = 0;
-
-    // Iterate over the image, avoiding the borders
-    for (int j = 1; j < input.rows - 1; j++)
+    // Iterate over each point in the contour
+    for (int c = 0; c < cnt; c++)
     {
-        for (int i = 1; i < input.cols - 1; i++)
+        // Check if the energy is not infinity and not the
+        // maximum float value
+        // This is done to ensure that only valid, finite
+        // energy values are summed
+        if (!isinff(contour[c].energy) && contour[c].energy != numeric_limits<float>::max())
         {
-            // Iterate over each channel of the pixel
-            for (int k = 0; k < 3; k++)
-            {
-                // Get the intensity value of the current pixel
-                tmp = input.at<Vec3i>(j, i)[k];
-
-                // If the intensity is higher than the high threshold, mark it as a strong edge (255)
-                if (tmp >= thres_high)
-                {
-                    res.at<Vec3b>(j, i)[k] = 255;
-                }
-                // If the intensity is lower than the low threshold, suppress it (0)
-                else if (tmp < thres_low)
-                {
-                    res.at<Vec3b>(j, i)[k] = 0;
-                }
-                // If the intensity is between the low and high thresholds, mark it as a weak edge (128)
-                else
-                {
-                    res.at<Vec3b>(j, i)[k] = 128;
-                }
-            }
+            // Add the point's energy to the total
+            tmp += contour[c].energy;
         }
     }
 
-    // Return the resulting image after double thresholding
-    return res;
+    return tmp; // Return the total energy of the contour
 }
 
-Mat applyHysteresis(Mat input)
+Mat showSnake(Mat input, vector<ContourPoint> contour)
 {
-    // Clone the input image to preserve the original and work on a copy
     Mat res = input.clone();
-
-    // Define constants for weak and strong edge values
-    int WEAK = 128, STRONG = 255;
-
-    // Iterate over the image, avoiding the borders
-    for (int j = 1; j < res.rows - 1; j++)
+    int p_cnt = contour.size();
+    for (int i = 0; i < p_cnt; i++)
     {
-        for (int i = 1; i < res.cols - 1; i++)
-        {
-            // Iterate over each channel of the pixel
-            for (int k = 0; k < 3; k++)
-            {
-                // Check if the current pixel is a weak edge
-                if (res.at<Vec3b>(j, i)[k] == WEAK)
-                {
-                    // Initialize a flag to check if the weak edge is connected to a strong edge
-                    bool connected = false;
-
-                    // Check the 8 neighboring pixels to see if any of them is a strong edge
-                    for (int dj = -1; dj <= 1; ++dj)
-                    {
-                        for (int di = -1; di <= 1; ++di)
-                        {
-                            // Skip the current pixel
-                            if (di == 0 && dj == 0)
-                                continue;
-
-                            // If a strong edge is found in the neighborhood, set the flag
-                            if (res.at<Vec3b>(j + dj, i + di)[k] == STRONG)
-                            {
-                                connected = true;
-                                break;
-                            }
-                        }
-                        if (connected)
-                            break;
-                    }
-
-                    // If the weak edge is connected to a strong edge, strengthen it; otherwise, suppress it
-                    res.at<Vec3b>(j, i)[k] = connected ? STRONG : 0;
-                }
-            }
-        }
+        ContourPoint p = contour[i % p_cnt];
+        ContourPoint pn = contour[(i + 1) % p_cnt];
+        circle(res, p, 3, (0, 0, 255), -1);
+        circle(res, pn, 3, (0, 0, 255), -1);
+        line(res, p, pn, (255, 255, 128), 1);
     }
-
-    // Return the resulting image after applying hysteresis
     return res;
 }
 
-
-void applyHoughTransform(cv::Mat edges, std::vector<cv::Vec2f> &lines, float rho, float theta, int threshold)
+void showGradient(Mat &input, Mat magnitude, Mat direction, int stride)
 {
-    // Get the dimensions of the edges image
-    int width = edges.cols;
-    int height = edges.rows;
-
-    // Calculate the maximum distance (rho) possible in the image
-    int rho_max = (int)(std::sqrt(width * width + height * height));
-
-    // Calculate the maximum number of bins for theta
-    int theta_max = (int)(CV_PI / theta);
-
-    // Create the accumulator matrix initialized to zero
-    cv::Mat accum = cv::Mat::zeros(2 * rho_max, theta_max, CV_32S);
-
-    // Iterate over the pixels of the edges image
-    for (int y = 0; y < edges.rows; y++)
+    int r = 20;
+    for (int j = 0; j < input.rows; j += stride)
     {
-        for (int x = 0; x < edges.cols; x++)
+        for (int i = 0; i < input.cols; i += stride)
         {
-            // Check if the current pixel is part of an edge
-            if (edges.at<Vec3b>(y, x)[0] > 0)
+            Point2i c(i, j);
+            int mag = magnitude.at<Vec3b>(j, i)[0];
+            float theta = direction.at<Vec3f>(j, i)[0];
+            if (mag > 0 && !isnanf(theta))
             {
-                // For each angle theta, calculate the corresponding rho value
-                for (int t = 0; t < theta_max; t++)
-                {
-                    double current_theta = (t * theta);
-
-                    // Calculate rho for the current (x, y) point and theta
-                    double rho_val = cvRound((x * std::cos(current_theta)) + (y * std::sin(current_theta)));
-                    int rho_index = (int)((rho_val / rho) + rho_max);
-
-                    // Increment the accumulator's bin if the index is valid
-                    if (rho_index >= 0 && rho_index < 2 * rho_max)
-                    {
-                        accum.at<int>(rho_index, t)++;
-                    }
-                }
-            }
-        }
-    }
-
-    // Iterate over the accumulator to find local maxima (lines)
-    for (int r = 0; r < 2 * rho_max; r++)
-    {
-        for (int t = 0; t < theta_max; t++)
-        {
-            // If the bin's value is above the threshold, it is considered a line
-            if (accum.at<int>(r, t) >= threshold)
-            {
-                // Convert (rho, theta) from accumulator space to image space and add to the lines vector
-                lines.push_back(cv::Vec2f(r * rho - rho_max, t * theta));
+                Point2i e;
+                e.x = (int)(r * (mag / 255) * cosf32(theta)) + i;
+                e.y = (int)(r * (mag / 255) * sinf32(theta)) + j;
+                arrowedLine(input, c, e, (255, 255, 255), 1);
             }
         }
     }
 }
+
 \end{lstlisting}
 
-\chapter{Result Images}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=6cm]{result_img/img1_q1.png}
-  \caption{Image 1 : Gaussian Filter}
-  \includegraphics[height=6cm]{result_img/img1_q2.png}
-  \caption{Image 1 : Canny Filter}
-  \includegraphics[height=6cm]{result_img/img1_q3.png}
-  \caption{Image 1 : Hough Line Detector}
-\end{figure}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=6cm]{result_img/img2_q1.png}
-  \caption{Image 2 : Gaussian Filter}
-  \includegraphics[height=6cm]{result_img/img2_q2.png}
-  \caption{Image 2 : Canny Filter}
-  \includegraphics[height=6cm]{result_img/img2_q3.png}
-  \caption{Image 2 : Hough Line Detector}
-\end{figure}
-\begin{figure}[!htb]
-  \centering
-  \includegraphics[height=6cm]{result_img/img3_q1.png}
-  \caption{Image 3 : Gaussian Filter}
-  \includegraphics[height=6cm]{result_img/img3_q2.png}
-  \caption{Image 3 : Canny Filter}
-  \includegraphics[height=6cm]{result_img/img3_q3.png}
-  \caption{Image 3 : Hough Line Detector}
-\end{figure}
+% \chapter{Result Images}
+% \begin{figure}[!htb]
+%   \centering
+%   \includegraphics[height=6cm]{result_img/img1_q1.png}
+%   \caption{Image 1 : Gaussian Filter}
+%   \includegraphics[height=6cm]{result_img/img1_q2.png}
+%   \caption{Image 1 : Canny Filter}
+%   \includegraphics[height=6cm]{result_img/img1_q3.png}
+%   \caption{Image 1 : Hough Line Detector}
+% \end{figure}
+% \begin{figure}[!htb]
+%   \centering
+%   \includegraphics[height=6cm]{result_img/img2_q1.png}
+%   \caption{Image 2 : Gaussian Filter}
+%   \includegraphics[height=6cm]{result_img/img2_q2.png}
+%   \caption{Image 2 : Canny Filter}
+%   \includegraphics[height=6cm]{result_img/img2_q3.png}
+%   \caption{Image 2 : Hough Line Detector}
+% \end{figure}
+% \begin{figure}[!htb]
+%   \centering
+%   \includegraphics[height=6cm]{result_img/img3_q1.png}
+%   \caption{Image 3 : Gaussian Filter}
+%   \includegraphics[height=6cm]{result_img/img3_q2.png}
+%   \caption{Image 3 : Canny Filter}
+%   \includegraphics[height=6cm]{result_img/img3_q3.png}
+%   \caption{Image 3 : Hough Line Detector}
+% \end{figure}
 \end{document}

@@ -13,9 +13,9 @@
 #define OUT_PATH "output"
 
 // define file name, can uncomment to select the input
-// #define FILENAME "img1"
+#define FILENAME "img1"
 // #define FILENAME "img2"
-#define FILENAME "img3"
+// #define FILENAME "img3"
 
 #define EXT "jpg"
 
@@ -42,31 +42,44 @@ int main(int argc, char **argv)
         printf("Original Img Size: w x h %d x %d\n", og_img.cols, og_img.rows);
     }
 
-    appendImgToCanvas(og_img);
     Mat bw_img;
     bw_img = applyGreyscaleFilter(og_img);
+    snprintf(out_file, MAX_LEN, "%s/%s/grey_scale.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, bw_img);
 
     Mat res_img, selected_img;
 
     Mat gaussian_filter = createGaussianFilter(3, 1);
     res_img = applyFilter(bw_img, gaussian_filter, 1, false);
     printf("Gaussian Filter Img Size: w x h %d x %d\n", res_img.cols, res_img.rows);
-
-    appendImgToCanvas(res_img);
+    snprintf(out_file, MAX_LEN, "%s/%s/gaussian.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, res_img);
 
     Mat sobelx;
     sobelx = applySobelX(res_img);
-    appendImgToCanvas(sobelx);
+    snprintf(out_file, MAX_LEN, "%s/%s/sobel_x.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, sobelx);
 
     Mat sobely;
     sobely = applySobelY(res_img);
-    appendImgToCanvas(sobely);
+    snprintf(out_file, MAX_LEN, "%s/%s/sobel_y.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, sobely);
 
     Mat magnitude;
     magnitude = calculateEdgeStrength(sobelx, sobely);
+    snprintf(out_file, MAX_LEN, "%s/%s/magnitude.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, magnitude);
 
     Mat direction;
     direction = calculateEdgeDirection(sobelx, sobely);
+    snprintf(out_file, MAX_LEN, "%s/%s/direction.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, direction);
+
+    Mat output;
+    magnitude.copyTo(output);
+    showGradient(output, magnitude, direction, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/first_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
 
     Mat mag2, dir2, dx, dy, res;
     dx = applySobelX(magnitude);
@@ -74,12 +87,17 @@ int main(int argc, char **argv)
     mag2 = calculateEdgeStrength(dx, dy);
     dir2 = calculateEdgeDirection(dx, dy);
 
+    mag2.copyTo(output);
+    showGradient(output, mag2, dir2, 3);
+    snprintf(out_file, MAX_LEN, "%s/%s/second_order_gvf.jpg", BASE_PATH, OUT_PATH);
+    imwrite(out_file, output);
+
     vector<ContourPoint> contour;
 
     VideoWriter video;
-    char video_name[100]="\0";
+    char video_name[100] = "\0";
     snprintf(video_name, 99, "%s/%s/vid_%s.mp4", BASE_PATH, OUT_PATH, FILENAME);
-    video.open(video_name , CV_FOURCC('m','p','4','v'), 10,og_img.size(), true);
+    video.open(video_name, CV_FOURCC('m', 'p', '4', 'v'), 10, og_img.size(), true);
 
     // We apply termination logic outside the active contour function
     // it is done by calculate energy over 4 last epochs
@@ -88,11 +106,11 @@ int main(int argc, char **argv)
 
     contour = initContourPointCircle(magnitude.cols / 2, magnitude.rows / 2, 400, 200);
     float alpha = 0.05, beta = 0.00001, gamma = 0.5;
-    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0,diff1,diff2,diff3;
-    bool isOscillating=false,isConverging=false;
+    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0, diff1, diff2, diff3;
+    bool isOscillating = false, isConverging = false;
     int osc_cnt = 0;
     vector<Mat> buf;
-    char iter_text[25]="\0";
+    char iter_text[25] = "\0";
     for (int k = 0; k < 10000; k++)
     {
         Mat i;
@@ -123,14 +141,15 @@ int main(int argc, char **argv)
         else
         {
             osc_cnt += 1;
+            // termination condition
             if (osc_cnt == 20)
             {
-                
+
                 snprintf(iter_text, 24, "Iteration: %d", k);
-                putText(i,iter_text,Point2i(10,30),FONT_HERSHEY_SIMPLEX,1,(0,0,0),2);
+                putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
                 printf("Frame %d %f\n", k, min_e);
                 snprintf(out_file, MAX_LEN, "%s/%s/result_%s.%s", BASE_PATH, OUT_PATH, FILENAME, EXT);
-                imwrite(out_file,i);
+                imwrite(out_file, i);
                 imshow("Original", i);
                 video.write(i);
                 video.release();
@@ -139,14 +158,14 @@ int main(int argc, char **argv)
             }
         }
 
-        if(k%10==0){
+        if (k % 10 == 0)
+        {
             snprintf(iter_text, 24, "Iteration: %d", k);
-            putText(i,iter_text,Point2i(10,30),FONT_HERSHEY_SIMPLEX,1,(0,0,0),2);
+            putText(i, iter_text, Point2i(10, 30), FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2);
             imshow("Original", i);
             video.write(i);
             waitKey(10);
         }
-        
     }
     printf("Finish\n");
     waitKey(0);
