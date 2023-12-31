@@ -29,7 +29,8 @@ Mat calculateEdgeDirection(Mat , Mat );
 vector<ContourPoint> initContourPointCircle(int,int,int,int);
 
 void activeContour(Mat,Mat, vector<ContourPoint>&,float,float,float);
-void activeContourWithForce(Mat,Mat,Mat,Mat, vector<ContourPoint>&,float,float,float);
+void activeContour2(Mat,Mat, vector<ContourPoint>&,float,float,float);
+float contourEnergy(vector<ContourPoint>&);
 
 Mat showSnake(Mat, vector<ContourPoint>);
 void showGradient(Mat&,Mat,Mat,int);

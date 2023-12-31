@@ -295,8 +295,9 @@ void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, 
             {
                 int v_mag = magnitude.at<Vec3b>(wj - offset, wi - offset)[0];
                 float v_theta = direction.at<Vec3f>(wj - offset, wi - offset)[0];
-                float x=0, y=0;
-                if(!isnanf(v_theta)){
+                float x = 0, y = 0;
+                if (!isnanf(v_theta))
+                {
                     // v_theta+=CV_PI;
                     x = v_mag * cosf32(v_theta);
                     y = v_mag * sinf32(v_theta);
@@ -316,35 +317,35 @@ void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, 
         //     p.x -= gamma * mag * cos(theta);
         //     p.y -= gamma * mag * sin(theta);
         // }
-        p.x += gamma *img_force[0];
-        p.y += gamma * img_force[1];
-        if(pn.settle || pp.settle){
-            beta=0;
-            }
-        
 
-        // e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        e_curve = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
-        e_image = -mag*mag;
+        if (pn.settle || pp.settle)
+        {
+            beta = 0;
+        }
+
+        p.x += gamma * img_force[0];
+        p.y += gamma * img_force[1];
+        e_curve = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
+        e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
+        e_image = -mag * mag;
         e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
 
-        if (e_point > p.energy && e_point<0)
+        if (e_point > p.energy && e_point < 0)
         {
-            contour[i].settle=true;
+            contour[i].settle = true;
             continue;
         }
         printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
 
-        contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x+gamma * img_force[0];
-        contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y+gamma * img_force[1];
+        contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x + gamma * img_force[0];
+        contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y + gamma * img_force[1];
         contour[i].energy = e_point;
-        
+
         // if (!isnanf(theta))
         // {
         //     // contour[i].x -= gamma * mag * cos(theta);
         //     // contour[i].y -= gamma * mag * sin(theta);
-            
+
         // }
         // contour[i].x += gamma * img_force[0];
         // contour[i].y += gamma * img_force[1];
@@ -369,102 +370,140 @@ void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, 
     }
 }
 
-void activeContourWithForce(Mat magnitude_d1, Mat direction_d1, Mat magnitude_d2, Mat direction_d2, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
+void activeContour2(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
 {
     int p_cnt = contour.size();
     vector<ContourPoint> prev_contour(contour);
     for (int i = 0; i < p_cnt; i++)
     {
         ContourPoint pp, p, pn;
-        // pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
-        // p = prev_contour[i % p_cnt];
-        // pn = prev_contour[(i + 1) % p_cnt];
-
         pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
         p = prev_contour[i % p_cnt];
         pn = prev_contour[(i + 1) % p_cnt];
+        // p.x += alpha * (p - pp).x + beta * ((pn - (2 * p) + pp)).x;
+        // p.y += alpha * (p - pp).y + beta * ((pn - (2 * p) + pp)).y;
+
+        // Vec2f img_force(0, 0), tmp;
+        // int w_size = 45, offset = w_size / 2;
+        // for (int wj = 0; wj < w_size; wj++)
+        // {
+        //     for (int wi = 0; wi < w_size; wi++)
+        //     {
+        //         int v_mag = magnitude.at<Vec3b>(wj - offset, wi - offset)[0];
+        //         float v_theta = direction.at<Vec3f>(wj - offset, wi - offset)[0];
+        //         float x = 0, y = 0;
+        //         if (!isnanf(v_theta))
+        //         {
+        //             // v_theta+=CV_PI;
+        //             x = v_mag * cosf32(v_theta);
+        //             y = v_mag * sinf32(v_theta);
+        //         }
+        //         tmp = Vec2f(x, y);
+        //         img_force += tmp;
+        //     }
+        // }
+        // img_force /= -w_size * w_size;
 
         float e_cont, e_curve, e_image, e_point;
 
-        Vec2f img_force(0, 0), tmp;
-        int w_size = 25, offset = w_size / 2;
-        for (int wj = 0; wj < w_size; wj++)
-        {
-            for (int wi = 0; wi < w_size; wi++)
-            {
-                int v_mag = magnitude_d2.at<Vec3b>(wj - offset, wi - offset)[0];
-                float v_theta = direction_d2.at<Vec3f>(wj - offset, wi - offset)[0]+CV_PI;
-                float x=0, y=0;
-                if(!isnanf(v_theta)){
-                    x = v_mag * cosf32(v_theta);
-                    y = v_mag * sinf32(v_theta);
-                }
-                tmp = Vec2f(x, y);
-                img_force += tmp;
-            }
-        }
-        img_force /= w_size * w_size;
+        float theta = direction.at<Vec3f>(p.y, p.x)[0];
 
-        int mag = magnitude_d1.at<Vec3b>((int)p.y, (int)p.x)[0];
-        float theta = direction_d1.at<Vec3f>(p.y, p.x)[0];
-
-        // if (!isnanf(theta))
+        // if (pn.settle || pp.settle)
         // {
-        //     p.x -= gamma * img_force[0];
-        //     p.y -= gamma * img_force[1];
+        //     beta = 0;
+        // }
+        // if(pp.settle){
+        //     alpha=alpha*2;
         // }
 
-        // ContourPoint pnpp = pn + pp - 2 * p, p_pp = p - pp;
-        // e_cont = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        // e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
-        // e_curve = powf32((pn - p).x, 2) + powf32((pn - p).y, 2);
-        e_cont = powf32((pn - p).x, 2) + powf32((pn - p).y, 2);
-        e_curve = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
-        e_image = -mag;
-        e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
-        printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
-        // if (e_point > p.energy)
+        int s_size = 25, s_offset = s_size / 2;
+        int min_i = 0, min_j = 0;
+        float min_e_point = numeric_limits<float>::max();
+        for (int wj = 0; wj < s_size; wj++)
+        {
+            for (int wi = 0; wi < s_size; wi++)
+            {
+                ContourPoint tmp;
+
+                tmp.x = p.x - s_offset + wi;
+                tmp.y = p.y - s_offset + wj;
+                int tmp_mag = magnitude.at<Vec3b>((int)tmp.y, (int)tmp.x)[0];
+                
+                e_cont = powf32((pn + pp - 2 * tmp).x, 2) + powf32((pn + pp - 2 * tmp).y, 2);
+                e_curve = powf32((tmp - pp).x, 2) + powf32((tmp - pp).y, 2);
+                e_image = -tmp_mag * tmp_mag;
+                e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
+                if (e_point < min_e_point)
+                {
+                    min_e_point = e_point;
+                    min_i = tmp.x;
+                    min_j = tmp.y;
+                }
+            }
+        }
+        contour[i].x = min_i;
+        contour[i].y = min_j;
+        contour[i].energy=min_e_point;
+        // if (min_e_point < 0)
         // {
+        //     contour[i].settle = true;
         //     continue;
         // }
 
-        // contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((pn - p)).x+ gamma*img_force[0];
-        // contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((pn - p)).y+ gamma*img_force[1];
-        // contour[i].x += alpha * (pn + pp - 2 * p).x ;
-        // contour[i].y += alpha * (pn + pp - 2 * p).y ;
-        contour[i].x += alpha * (pn-p).x + beta * ((pn + pp - 2 * p)).x + gamma*(img_force[0]);
-        contour[i].y += alpha * (pn-p).y + beta * ((pn + pp - 2 * p)).y+ gamma*(img_force[1]);
+        // p.x += gamma * img_force[0];
+        // p.y += gamma * img_force[1];
+        // e_curve = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
+        // e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
+        // e_image = -mag * mag;
+        // e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
 
-        contour[i].x += gamma * img_force[0];
-        contour[i].y += gamma * img_force[1];
-        contour[i].energy = e_point;
+        // printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
+
+        // contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x + gamma * img_force[0];
+        // contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y + gamma * img_force[1];
+        // contour[i].energy = e_point;
+
         // if (!isnanf(theta))
         // {
-        //     // contour[i].x -= gamma * mag * cosf32(theta);
-        //     // contour[i].y -= gamma * mag * sinf32(theta);
-        //     contour[i].x += gamma * img_force[0];
-        //     contour[i].y += gamma * img_force[1];
-            
+        //     // contour[i].x -= gamma * mag * cos(theta);
+        //     // contour[i].y -= gamma * mag * sin(theta);
+
         // }
+        // contour[i].x += gamma * img_force[0];
+        // contour[i].y += gamma * img_force[1];
         // printf("%d - %f\n",i, theta);
 
         if (contour[i].x < 0 || contour[i].x != contour[i].x)
         {
             contour[i].x = 0;
         }
-        if (contour[i].x >= magnitude_d1.cols || contour[i].x != contour[i].x)
+        if (contour[i].x >= magnitude.cols || contour[i].x != contour[i].x)
         {
-            contour[i].x = magnitude_d1.cols - 1;
+            contour[i].x = magnitude.cols - 1;
         }
         if (contour[i].y < 0 || contour[i].y != contour[i].y)
         {
             contour[i].y = 0;
         }
-        if (contour[i].y >= magnitude_d1.rows || contour[i].y != contour[i].y)
+        if (contour[i].y >= magnitude.rows || contour[i].y != contour[i].y)
         {
-            contour[i].y = magnitude_d1.rows - 1;
+            contour[i].y = magnitude.rows - 1;
         }
     }
+}
+
+float contourEnergy(vector<ContourPoint> &contour)
+{
+    float tmp = 0;
+    int cnt = contour.size();
+    for (int c = 0; c < cnt; c++)
+    {
+        if (!isinff(contour[c].energy) && contour[c].energy!=numeric_limits<float>::max())
+        {
+            tmp += contour[c].energy;
+        }
+    }
+    return tmp;
 }
 
 Mat showSnake(Mat input, vector<ContourPoint> contour)
@@ -475,8 +514,8 @@ Mat showSnake(Mat input, vector<ContourPoint> contour)
     {
         ContourPoint p = contour[i % p_cnt];
         ContourPoint pn = contour[(i + 1) % p_cnt];
-        circle(res, p, 3, (0, 0, (int)(i * 255 / p_cnt)), -1);
-        circle(res, pn, 3, (0, 0, (int)(i * 255 / p_cnt)), -1);
+        circle(res, p, 3, (0, 0, 255), -1);
+        circle(res, pn, 3, (0, 0, 255), -1);
         line(res, p, pn, (255, 255, 128), 1);
     }
     return res;
