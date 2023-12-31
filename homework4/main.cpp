@@ -81,33 +81,39 @@ int main(int argc, char **argv)
     snprintf(video_name, 99, "%s/%s/vid_%s.mp4", BASE_PATH, OUT_PATH, FILENAME);
     video.open(video_name , CV_FOURCC('m','p','4','v'), 10,og_img.size(), true);
 
+    // We apply termination logic outside the active contour function
+    // it is done by calculate energy over 4 last epochs
+    // if it oscillates or stable, we increase count by 1
+    // The threshold of count is 20 to help avoid local minima
+
     contour = initContourPointCircle(magnitude.cols / 2, magnitude.rows / 2, 400, 200);
     float alpha = 0.05, beta = 0.00001, gamma = 0.5;
-    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 1, e_3 = -1, e_4 = 0;
+    float min_e = numeric_limits<float>::max(), current_e, e_1 = 0, e_2 = 0, e_3 = 0, e_4 = 0,diff1,diff2,diff3;
+    bool isOscillating=false,isConverging=false;
     int osc_cnt = 0;
     vector<Mat> buf;
     char iter_text[25]="\0";
     for (int k = 0; k < 10000; k++)
     {
         Mat i;
-        // activeContour(mag2,dir2,contour,alpha,beta,gamma);
-        activeContour2(mag2, dir2, contour, alpha, beta, gamma);
+        activeContour(mag2, dir2, contour, alpha, beta, gamma);
         current_e = contourEnergy(contour);
-        // activeContour2(magnitude,direction,contour,alpha,beta,gamma);
 
         Mat mag_with_field;
         og_img.copyTo(mag_with_field);
-        // showGradient(mag_with_field,magnitude,direction,2);
         i = showSnake(mag_with_field, contour);
+
+        // calculate energy over 4 latest energy to check
+        // if converge or oscillate
         e_4 = e_3;
         e_3 = e_2;
         e_2 = e_1;
         e_1 = current_e;
-        double diff1 = e_2 - e_1;
-        double diff2 = e_3 - e_2;
-        double diff3 = e_4 - e_3;
-        bool isOscillating = (diff1 * diff2 < 0) && (diff2 * diff3 < 0);
-        bool isConverging = std::abs(diff1) == std::abs(diff2) && std::abs(diff2) == std::abs(diff3);
+        diff1 = e_2 - e_1;
+        diff2 = e_3 - e_2;
+        diff3 = e_4 - e_3;
+        isOscillating = (diff1 * diff2 < 0) && (diff2 * diff3 < 0);
+        isConverging = std::abs(diff1) == std::abs(diff2) && std::abs(diff2) == std::abs(diff3);
 
         if (!(isOscillating && isConverging))
         {
@@ -122,7 +128,7 @@ int main(int argc, char **argv)
                 
                 snprintf(iter_text, 24, "Iteration: %d", k);
                 putText(i,iter_text,Point2i(10,30),FONT_HERSHEY_SIMPLEX,1,(0,0,0),2);
-                printf("-frame %d %f\n", k, min_e);
+                printf("Frame %d %f\n", k, min_e);
                 snprintf(out_file, MAX_LEN, "%s/%s/result_%s.%s", BASE_PATH, OUT_PATH, FILENAME, EXT);
                 imwrite(out_file,i);
                 imshow("Original", i);
@@ -136,7 +142,6 @@ int main(int argc, char **argv)
         if(k%10==0){
             snprintf(iter_text, 24, "Iteration: %d", k);
             putText(i,iter_text,Point2i(10,30),FONT_HERSHEY_SIMPLEX,1,(0,0,0),2);
-            printf("frame %d %f\n", k, min_e);
             imshow("Original", i);
             video.write(i);
             waitKey(10);
