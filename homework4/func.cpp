@@ -269,7 +269,7 @@ vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
     for (int i = 0; i < quantity; i++)
     {
         float x, y;
-        // Calculate the x and y coordinates using polar to 
+        // Calculate the x and y coordinates using polar to
         // Cartesian conversion
         x = (r * cosf32(theta)) + cx;
         y = (r * sinf32(theta)) + cy;
@@ -279,12 +279,12 @@ vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
         p.x = x;
         p.y = y;
 
-        // Since we try to minimise the energy, we initialise 
+        // Since we try to minimise the energy, we initialise
         // the energy to the maximum float value
-        p.energy = numeric_limits<float>::max(); 
-        
+        p.energy = numeric_limits<float>::max();
+
         // Add the ContourPoint to the vector
-        tmp.push_back(p); 
+        tmp.push_back(p);
         theta += d_theta;
     }
 
@@ -294,11 +294,11 @@ vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
 
 /**
  * @brief Perform the active contour (snake) algorithm on an image.
- * 
+ *
  * This function iteratively adjusts the positions of contour points to align with image features
  * like edges, based on an energy minimization process. The energy terms include continuity,
  * curvature, and image forces.
- * 
+ *
  * @param magnitude The magnitude of the gradient of the image.
  * @param direction The direction of the gradient of the image.
  * @param contour A reference to a vector of ContourPoint representing the initial contour.
@@ -362,14 +362,13 @@ void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, 
     }
 }
 
-
 /**
  * @brief Calculate the total energy of a contour.
- * 
+ *
  * This function computes the sum of the energy values of each point in the contour.
  * It is useful for evaluating the overall energy of the contour, which can be a measure of its
  * alignment with image features or its smoothness, depending on the energy model used.
- * 
+ *
  * @param contour A reference to a vector of ContourPoint, each with an associated energy value.
  * @return float The total energy of the contour.
  */
@@ -381,20 +380,19 @@ float contourEnergy(vector<ContourPoint> &contour)
     // Iterate over each point in the contour
     for (int c = 0; c < cnt; c++)
     {
-        // Check if the energy is not infinity and not the 
+        // Check if the energy is not infinity and not the
         // maximum float value
-        // This is done to ensure that only valid, finite 
+        // This is done to ensure that only valid, finite
         // energy values are summed
         if (!isinff(contour[c].energy) && contour[c].energy != numeric_limits<float>::max())
         {
             // Add the point's energy to the total
-            tmp += contour[c].energy; 
+            tmp += contour[c].energy;
         }
     }
 
     return tmp; // Return the total energy of the contour
 }
-
 
 Mat showSnake(Mat input, vector<ContourPoint> contour)
 {
@@ -413,7 +411,7 @@ Mat showSnake(Mat input, vector<ContourPoint> contour)
 
 void showGradient(Mat &input, Mat magnitude, Mat direction, int stride)
 {
-    int r = 5;
+    int r = 20;
     for (int j = 0; j < input.rows; j += stride)
     {
         for (int i = 0; i < input.cols; i += stride)
@@ -426,7 +424,7 @@ void showGradient(Mat &input, Mat magnitude, Mat direction, int stride)
                 Point2i e;
                 e.x = (int)(r * (mag / 255) * cosf32(theta)) + i;
                 e.y = (int)(r * (mag / 255) * sinf32(theta)) + j;
-                arrowedLine(input, c, e, (0, 0, mag), 1);
+                arrowedLine(input, c, e, (255, 255, 255), 1);
             }
         }
     }
