@@ -22,16 +22,18 @@
 \contentsline {subsubsection}{Contour Energy Calculation}{26}{section*.14}%
 \contentsline {subsubsection}{Iteration and Termination Logic}{26}{section*.15}%
 \contentsline {chapter}{\numberline {3}Discussion}{29}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Observations}{29}{section.3.1}%
-\contentsline {subsection}{\numberline {3.1.1}Gaussian Filter Affects the Active Contour Algorithm}{29}{subsection.3.1.1}%
-\contentsline {subsection}{\numberline {3.1.2}Clamping Affects Performance}{29}{subsection.3.1.2}%
-\contentsline {subsection}{\numberline {3.1.3}Gradient Vector Field}{29}{subsection.3.1.3}%
-\contentsline {subsection}{\numberline {3.1.4}Contour Point Searching Window Size}{29}{subsection.3.1.4}%
-\contentsline {subsection}{\numberline {3.1.5}alpha beta gamma}{30}{subsection.3.1.5}%
-\contentsline {subsection}{\numberline {3.1.6}convergence detection and terminal condition}{30}{subsection.3.1.6}%
-\contentsline {subsection}{\numberline {3.1.7}Angle step in Hough Transform}{30}{subsection.3.1.7}%
-\contentsline {subsection}{\numberline {3.1.8}Summary}{31}{subsection.3.1.8}%
-\contentsline {chapter}{\numberline {A}Git Repository}{32}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{33}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{38}{appendix.C}%
-\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{42}{appendix.D}%
+\contentsline {section}{\numberline {3.1}Results}{29}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Observations}{31}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Gaussian Filter}{31}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Image Preprocessing}{31}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Initial Contour Setup}{31}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Contour Point Searching Window Size}{32}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}\(\alpha \), \(\beta \), and \(\gamma \) Selection}{32}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Convergence Detection, Oscillating State, and Terminal Condition}{34}{subsection.3.2.6}%
+\contentsline {subsection}{\numberline {3.2.7}Gradient Vector Field}{34}{subsection.3.2.7}%
+\contentsline {subsection}{\numberline {3.2.8}Force Model}{36}{subsection.3.2.8}%
+\contentsline {subsection}{\numberline {3.2.9}Summary}{37}{subsection.3.2.9}%
+\contentsline {chapter}{\numberline {A}Git Repository}{38}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{39}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{44}{appendix.C}%
+\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{48}{appendix.D}%

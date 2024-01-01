@@ -872,32 +872,151 @@ This section performed in main function of the program it controls the iteration
 
 
 \chapter{Discussion}
+\section{Results}
+\begin{figure}[!htb]
+    \centering
+      \includegraphics[height=0.3\paperheight]{result_img/result_img1.jpg}
+    \caption{result images for img1.jpg}
+\end{figure}
+\begin{figure}[!htb]
+    \centering
+      \includegraphics[height=0.3\paperheight]{result_img/result_img2.jpg}
+    \caption{result images for img2.jpg}
+\end{figure}
+\begin{figure}[!htb]
+    \centering
+      \includegraphics[height=0.3\paperheight]{result_img/result_img3.jpg}
+    \caption{result images for img3.jpg}
+\end{figure}
+
+
+\clearpage
 \section{Observations}
-\subsection{Gaussian Filter Affects the Active Contour Algorithm}
+\subsection{Gaussian Filter}
 \paragraph*{}
 Gaussian blur is a method used in the active contour algorithm to smooth out images. It helps by reducing noise and removing rough edges and unnecessary details. This smoothing makes it easier for the algorithm to identify and track the outlines of objects in an image. However, it's important not to use too much Gaussian blur. If the image becomes overly blurred, the algorithm can become slower and lose important details. This loss of detail can make the algorithm less accurate in recognizing the shapes and features of the image. Therefore, it's crucial to use just the right amount of Gaussian blur to keep the algorithm working well.
-\subsection{Clamping Affects Performance}
-\paragraph*{}
 
-\subsection{Gradient Vector Field}
+\subsection{Image Preprocessing}
 \paragraph*{}
+Image preprocessing is a critical step in enhancing the overall performance of image analysis and processing tasks. In your specific example, the application of a lower threshold is used as a preprocessing technique. This approach plays a vital role in improving the accuracy and speed of the subsequent image processing tasks.
+\paragraph*{}
+By applying a lower threshold:
+\begin{itemize}
+    \item Unwanted low-intensity areas like shadows are filtered out, leading to a cleaner image.
+    \item The resulting image has more pronounced features of interest.
+\end{itemize}
+\paragraph*{}
+Benefits of lower thresholding in image preprocessing include:
+\begin{itemize}
+    \item \textbf{Increased Accuracy:} The removal of irrelevant data, like shadows, allows for more precise analysis of important image features.
+    \item \textbf{Enhanced Speed:} Reducing the complexity and data points in the image decreases the computational load, allowing for faster processing in subsequent analysis stages.
+\end{itemize}
+
+\subsection{Initial Contour Setup}
+\paragraph*{}
+Initial contour point setup is crucial part. A well-thought-out setup can significantly enhance the efficiency of the algorithm. One effective approach is to use a circular initial contour. This method helps to mitigate the 'corner effect', where corners take longer time to converge, potentially slowing down the process. Alternatively, a rectangular initial contour can be used to ensure comprehensive coverage of the image area, especially in images where the target features are more aligned with rectangular shapes.
+
+However, it's important to note that there is no one-size-fits-all solution for all problems. The effectiveness of the initial contour setup can be greatly improved by having prior knowledge about the target image, ideally supervised by a human. This allows for a more tailored approach, increasing the efficiency and accuracy of the image processing task.
+
+In the context of this experiment, The circular model was chosen. The circle has a radius of 400 pixels, and its center coincides with the center of the image. This setup was chosen as it provides a balanced approach, offering good initial coverage and reducing the time to converge, especially in images where the target features are centrally located or distributed evenly across the image. This standardized approach simplifies the process and provides a consistent starting point for processing a variety of images
 
 \subsection{Contour Point Searching Window Size}
 \paragraph*{}
-After conducting multiple experiments to address a specific problem, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.\\
+After conducting multiple experiments, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima noise. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.\\
 On the other hand, a window that's too large risks overlooking important features. Larger windows encompass more of the image, which can dilute the significance of smaller, yet critical features. This can cause the algorithm to miss subtle but essential details, as it focuses on broader trends over smaller, localized variations. In essence, the window size acts as a balancing factor. It must be large enough to capture sufficient context for accurate analysis but not so large that it overlooks finer details. Adjusting this parameter based on the feature gap and intensity ensures the algorithm remains sensitive to important details while maintaining processing efficiency.
 
-\subsection{alpha beta gamma}
+\subsection{\(\alpha\), \(\beta\), and \(\gamma\) Selection}
 \paragraph*{}
+These parameters are crucial for balancing the internal and external forces acting on the contour and can significantly affect the behavior and effectiveness of the model.
 
-\subsection{convergence detection and terminal condition}
+\subsubsection*{Alpha (\(\alpha\)) - Continuity Term}
+\paragraph*{Purpose:} 
+This parameter controls the influence of the continuity energy term in the snake model. Continuity energy aims to maintain an even spacing between consecutive points on the contour, promoting a uniform distribution of points.
+\paragraph*{Effect:}
+A higher value of \(\alpha\) makes the contour act like a tightly stretched elastic band, resisting large differences in distance between adjacent points. This can prevent the contour from easily bending or adapting to complex shapes.
+A lower value of \(\alpha\) allows more flexibility, enabling the contour to more easily conform to the object's shape but may lead to uneven point distribution or a less stable contour.
+
+\subsubsection*{Beta (\(\beta\)) - Curvature Term:}
+\paragraph*{Purpose:} 
+Beta controls the curvature energy term, which penalizes sharp bends or curves in the contour. It encourages the contour to be smooth and less wavy.
+\paragraph*{Effect:}
+A high value of \(\beta\) results in a smoother contour, resisting sharp turns or bends. This can be helpful in ignoring small, irrelevant details or noise but may prevent the contour from accurately fitting into sharp corners or concave regions.
+A low value of \(\beta\) allows the contour to have more bends and curves, which can be useful for outlining irregular or complex shapes, but it may also make the contour more susceptible to noise and small irrelevant details.
+
+\subsubsection*{Gamma (\(\gamma\)) -  Proportion of Intensity (External) Energy:}
+\paragraph*{Purpose:} 
+Gamma controls the relative influence of the external energy term, which is often related to the image's intensity (such as edge information or other image features).
+\paragraph*{Effect:}
+A large \(\gamma\)  increases the influence of image-based features (like edges) on the movement of the contour. This can help the contour to better adhere to prominent image features.
+A smaller \(\gamma\) reduces the impact of image intensity on the contour, making internal forces (like continuity and curvature) more dominant. This might be useful in situations where the internal structure of the contour is more important than the exact image features.
 \paragraph*{}
+Balancing these parameters is key to achieving good performance with active contours. The optimal values often depend on the specific characteristics of the image and the object being segmented. For instance, images with well-defined edges might require different parameter settings than those with more subtle or textured boundaries. Experimentation and tuning are usually necessary to find the most effective combination of \(\alpha\), \(\beta\), and \(\gamma\) for a given application.
+\begin{figure}[!]
+    \begin{minipage}{\linewidth}
+        \centering
+        \begin{subfigure}{0.49\textwidth}
+              \includegraphics[width=\linewidth]{result_img/beta_0_01.jpg}
+            \subcaption{\(\beta\)=0.01}
+        \end{subfigure}
+        \begin{subfigure}{0.49\textwidth}
+              \includegraphics[width=\linewidth]{result_img/beta_0_00001.jpg}
+            \subcaption{\(\beta\)=0.00001}
+        \end{subfigure}
+
+        \caption{Curvature Term \(\beta\) affects the result}
+    \end{minipage}
+
+\end{figure}
 
 
-
-\subsection{Angle step in Hough Transform}
+\subsection{Convergence Detection, Oscillating State, and Terminal Condition}
 \paragraph*{}
-Small angle step tends to over detect new line, while too high angle step will give inaccurate result as shown below.
+For this experiment, we have chosen to use 'convergence' or 'oscillation' as the terminal criteria. Convergence is defined as the point where the movement of the contour points becomes negligible, indicating that the algorithm has successfully detected the target features and there is no further significant change in the contour's position. This is a common criterion in image processing, as it signifies that the algorithm has stabilized and the desired outcome has been achieved.
+\paragraph*{}
+On the other hand, 'oscillation' is used as a criterion to prevent excessive computation and to handle cases where the contour cannot settle on a stable configuration. Oscillation occurs when the contour points repeatedly move back and forth over a small area without reaching a state of convergence. When such a pattern is detected, the process is terminated to avoid unnecessary calculations and potential infinite loops.
+\paragraph*{}
+By employing these two criteria, we ensure that the experiment is efficient and effective. The use of convergence as a terminal point guarantees accuracy in stable scenarios, while the incorporation of oscillation as a criterion safeguards against computational inefficiency in more complex or problematic cases.
+
+\subsection{Gradient Vector Field}
+\paragraph*{}
+The use of a gradient vector field in image processing is an effective approach, especially in tasks like contour detection. However, relying solely on first-order derivatives (the rate of change of intensity) presents certain limitations. In the first-order gradient, the direction of the gradient vectors points outward from the edges in the image, indicating the direction in which intensity increases. When these gradients are used to move contour points, they provide a force that attracts these points towards areas of higher intensity. This works well up to the edge of an object, but the issue arises once the contour point crosses the edge.
+\paragraph*{}
+The primary problem with first-order gradients is their lack of an attracting force back towards the edge once a contour point has passed it. This means if a point overshoots the edge, the first-order gradient doesn't provide the necessary information to guide it back, resulting in incorrect positioning of the contour. This behavior leads to inaccuracies in accurately tracing the object's boundaries.
+\paragraph*{}
+Switching to second-order derivatives can address this issue effectively. The second-order gradient doesn't just indicate the rate of change of intensity but also the rate at which this rate of change is itself changing. This additional information is crucial as it can indicate where the intensity changes are beginning to decrease, essentially highlighting the edges more effectively. When a contour point crosses an edge, the second-order gradient provides a signal that the point is moving away from a region of rapid intensity change, thus encouraging a return to the edge. This mechanism ensures a more accurate and reliable contour detection, as the points are better guided to conform to the actual edges of objects in the image. The effectiveness of second-order gradients over first-order ones in this context is often illustrated in comparative images, showing how they better capture the true edges and contours in various scenarios.
+
+\begin{figure}[!]
+    \begin{minipage}{\linewidth}
+        \centering
+        \begin{subfigure}{0.49\textwidth}
+              \includegraphics[width=\linewidth]{output/first_order_gvf.jpg}
+            \subcaption{First Order}
+        \end{subfigure}
+        \begin{subfigure}{0.49\textwidth}
+              \includegraphics[width=\linewidth]{output/second_order_gvf.jpg}
+            \subcaption{Second Order}
+        \end{subfigure}
+
+        \caption{Comparison between first order and second order GVF}
+    \end{minipage}
+
+\end{figure}
+
+\clearpage
+
+\subsection{Force Model}
+\paragraph*{}
+There is an alternative approach for moving contour points: the force model. While the energy model is more traditional, using a force model can offer distinct advantages, particularly in terms of convergence speed and computational efficiency.
+\paragraph*{}
+The force model, unlike the energy model, does not rely on the size of a search window. This independence from window size is a significant advantage because it eliminates the need to optimize this parameter, which can be both time-consuming and computationally expensive. By not being tied to a search window, the force model can converge more rapidly to the desired solution, as it is less constrained and can react more directly to the image data.
+\paragraph*{}
+Another benefit of the force model is its reduced computational load. Since it doesn't depend on iteratively scanning through various window sizes, the number of calculations required is substantially lower. This makes the process faster and more efficient, particularly for larger images or more complex contours.
+\paragraph*{}
+The force model operates through vector addition. In this approach, forces are calculated at each contour point, and these forces are then summed up (or integrated) to determine the direction and magnitude of movement for each point. This method is more dynamic and can adapt quickly to changes in the image data.
+\paragraph*{}
+Gradient Vector Flow (GVF) plays a crucial role in this force model, both in its first-order and second-order forms. First-order GVF provides information about the direction of the most significant intensity change, guiding the contour points towards areas of high gradient. Second-order GVF, on the other hand, adds context about the curvature of the intensity landscape, helping to more accurately target the edges of objects.
+\paragraph*{}
+While in this homework, the code for this approach is not provided since it is still not provide a good result and I decided to remove it, the experiments was conducted, and the potential of this method is clear. Its faster convergence and reduced computational.
 
 \begin{figure}[!htb]
     \begin{minipage}{\linewidth}

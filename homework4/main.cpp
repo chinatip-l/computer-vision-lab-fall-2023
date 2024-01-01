@@ -13,9 +13,9 @@
 #define OUT_PATH "output"
 
 // define file name, can uncomment to select the input
-#define FILENAME "img1"
+// #define FILENAME "img1"
 // #define FILENAME "img2"
-// #define FILENAME "img3"
+#define FILENAME "img3"
 
 #define EXT "jpg"
 
