@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+
 const double K_E = std::exp(1.0);
 
 Mat applyGreyscaleFilter(Mat img)
@@ -129,7 +130,8 @@ Mat applyFilter(Mat img, Mat kernel, int stride, bool suppress_border)
     {
         for (int img_i = 0; img_i < img.cols; img_i += stride)
         {
-            // check if it is a border and suppress border if selected
+            // check if it is a border and suppress border
+            // if selected
             if (img_i < ker_w || img_j < ker_h || img_i > img.cols - ker_h - 1 || img_j > img.rows - ker_h - 1)
             {
                 if (suppress_border)
@@ -196,9 +198,9 @@ Mat applySobelY(Mat img_in)
     return result;
 }
 
-Mat calculateEdgeStrength(Mat x, Mat y)
+Mat calculateEdgeStrength(Mat grad_x, Mat grad_y)
 {
-    Mat strength = Mat::zeros(x.rows, x.cols, CV_8UC3);
+    Mat strength = Mat::zeros(grad_x.rows, grad_x.cols, CV_8UC3);
     float tmp = 0;
     for (int j = 0; j < strength.rows; j += 1)
     {
@@ -208,8 +210,11 @@ Mat calculateEdgeStrength(Mat x, Mat y)
             {
                 // Strength of pixel is calculated by
                 // sqrt(gx^2 + gy^2)
-                tmp = (x.at<Vec3i>(j, i)[k] * x.at<Vec3i>(j, i)[k]) + (y.at<Vec3i>(j, i)[k] * y.at<Vec3i>(j, i)[k]);
+                tmp = (grad_x.at<Vec3i>(j, i)[k] * grad_x.at<Vec3i>(j, i)[k]) + (grad_y.at<Vec3i>(j, i)[k] * grad_y.at<Vec3i>(j, i)[k]);
                 tmp = round(sqrtf32(tmp));
+
+                // add clipping criteria in case of over 255
+                // and lower bound for suppressing soft area
                 if (tmp > 255)
                 {
                     tmp = 255;
@@ -226,9 +231,9 @@ Mat calculateEdgeStrength(Mat x, Mat y)
     return strength;
 }
 
-Mat calculateEdgeDirection(Mat x, Mat y)
+Mat calculateEdgeDirection(Mat grad_x, Mat grad_y)
 {
-    Mat direction = Mat::zeros(x.rows, x.cols, CV_32FC3);
+    Mat direction = Mat::zeros(grad_x.rows, grad_x.cols, CV_32FC3);
     for (int j = 0; j < direction.rows; j += 1)
     {
         for (int i = 0; i < direction.cols; i += 1)
@@ -237,202 +242,110 @@ Mat calculateEdgeDirection(Mat x, Mat y)
             {
                 // direction of pixel is calculated by
                 // atan(y/x)
-                // direction.at<Vec3f>(j, i)[k] = atan2f32(y.at<Vec3f>(j, i)[k], x.at<Vec3f>(j, i)[k]) * 10;
-
-                // if (y.at<Vec3i>(j, i)[k] == 0 && x.at<Vec3i>(j, i)[k] == 0)
-                // {
-                //     direction.at<Vec3f>(j, i)[k] = 0;
-                // }
-                // else
-                // {
-                //     direction.at<Vec3f>(j, i)[k] = atan2f32(y.at<Vec3i>(j, i)[k], x.at<Vec3i>(j, i)[k]);
-                // }
-                direction.at<Vec3f>(j, i)[k] = atan2f32(y.at<Vec3i>(j, i)[k], x.at<Vec3i>(j, i)[k]);
+                direction.at<Vec3f>(j, i)[k] = atan2f32(grad_y.at<Vec3i>(j, i)[k], grad_x.at<Vec3i>(j, i)[k]);
             }
         }
     }
     return direction;
 }
 
-vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int cnt)
+/**
+ * @brief Initialise contour points in a circular pattern.
+ *
+ * This function creates a set of contour points arranged in the shape of a circle.
+ * It is useful for initializing contour-based algorithms, especially for circular objects.
+ *
+ * @param cx The x-coordinate of the circle's center.
+ * @param cy The y-coordinate of the circle's center.
+ * @param r The radius of the circle.
+ * @param quantity The number of contour points to generate.
+ * @return vector<ContourPoint> A vector of contour points arranged in a circular pattern.
+ */
+vector<ContourPoint> initContourPointCircle(int cx, int cy, int r, int quantity)
 {
     vector<ContourPoint> tmp;
-    float theta = 0, d_theta = (2 * CV_PI) / cnt;
-    for (int i = 0; i < cnt; i++)
+    float theta = 0, d_theta = (2 * CV_PI) / quantity;
+
+    for (int i = 0; i < quantity; i++)
     {
         float x, y;
+        // Calculate the x and y coordinates using polar to 
+        // Cartesian conversion
         x = (r * cosf32(theta)) + cx;
         y = (r * sinf32(theta)) + cy;
+
+        // Create a ContourPoint and set its properties
         ContourPoint p;
         p.x = x;
         p.y = y;
-        p.energy = numeric_limits<float>::max();
-        tmp.push_back(p);
+
+        // Since we try to minimise the energy, we initialise 
+        // the energy to the maximum float value
+        p.energy = numeric_limits<float>::max(); 
+        
+        // Add the ContourPoint to the vector
+        tmp.push_back(p); 
         theta += d_theta;
     }
+
+    // Return the vector of contour points
     return tmp;
 }
 
-// maybe calculate energy and return, compare outside
+/**
+ * @brief Perform the active contour (snake) algorithm on an image.
+ * 
+ * This function iteratively adjusts the positions of contour points to align with image features
+ * like edges, based on an energy minimization process. The energy terms include continuity,
+ * curvature, and image forces.
+ * 
+ * @param magnitude The magnitude of the gradient of the image.
+ * @param direction The direction of the gradient of the image.
+ * @param contour A reference to a vector of ContourPoint representing the initial contour.
+ * @param alpha The weight for the continuity energy term.
+ * @param beta The weight for the curvature energy term.
+ * @param gamma The weight for the image energy term.
+ */
 void activeContour(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
 {
     int p_cnt = contour.size();
     vector<ContourPoint> prev_contour(contour);
+
     for (int i = 0; i < p_cnt; i++)
     {
+        // Retrieve previous, current, and next points in the contour
         ContourPoint pp, p, pn;
         pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
         p = prev_contour[i % p_cnt];
         pn = prev_contour[(i + 1) % p_cnt];
-        // p.x += alpha * (p - pp).x + beta * ((pn - (2 * p) + pp)).x;
-        // p.y += alpha * (p - pp).y + beta * ((pn - (2 * p) + pp)).y;
 
-        Vec2f img_force(0, 0), tmp;
-        int w_size = 45, offset = w_size / 2;
-        for (int wj = 0; wj < w_size; wj++)
-        {
-            for (int wi = 0; wi < w_size; wi++)
-            {
-                int v_mag = magnitude.at<Vec3b>(wj - offset, wi - offset)[0];
-                float v_theta = direction.at<Vec3f>(wj - offset, wi - offset)[0];
-                float x = 0, y = 0;
-                if (!isnanf(v_theta))
-                {
-                    // v_theta+=CV_PI;
-                    x = v_mag * cosf32(v_theta);
-                    y = v_mag * sinf32(v_theta);
-                }
-                tmp = Vec2f(x, y);
-                img_force += tmp;
-            }
-        }
-        img_force /= -w_size * w_size;
-
-        float e_cont, e_curve, e_image, e_point;
-        int mag = magnitude.at<Vec3b>((int)p.y, (int)p.x)[0];
-        float theta = direction.at<Vec3f>(p.y, p.x)[0];
-
-        // if (!isnanf(theta))
-        // {
-        //     p.x -= gamma * mag * cos(theta);
-        //     p.y -= gamma * mag * sin(theta);
-        // }
-
-        if (pn.settle || pp.settle)
-        {
-            beta = 0;
-        }
-
-        p.x += gamma * img_force[0];
-        p.y += gamma * img_force[1];
-        e_curve = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
-        e_image = -mag * mag;
-        e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
-
-        if (e_point > p.energy && e_point < 0)
-        {
-            contour[i].settle = true;
-            continue;
-        }
-        printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
-
-        contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x + gamma * img_force[0];
-        contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y + gamma * img_force[1];
-        contour[i].energy = e_point;
-
-        // if (!isnanf(theta))
-        // {
-        //     // contour[i].x -= gamma * mag * cos(theta);
-        //     // contour[i].y -= gamma * mag * sin(theta);
-
-        // }
-        // contour[i].x += gamma * img_force[0];
-        // contour[i].y += gamma * img_force[1];
-        // printf("%d - %f\n",i, theta);
-
-        if (contour[i].x < 0 || contour[i].x != contour[i].x)
-        {
-            contour[i].x = 0;
-        }
-        if (contour[i].x >= magnitude.cols || contour[i].x != contour[i].x)
-        {
-            contour[i].x = magnitude.cols - 1;
-        }
-        if (contour[i].y < 0 || contour[i].y != contour[i].y)
-        {
-            contour[i].y = 0;
-        }
-        if (contour[i].y >= magnitude.rows || contour[i].y != contour[i].y)
-        {
-            contour[i].y = magnitude.rows - 1;
-        }
-    }
-}
-
-void activeContour2(Mat magnitude, Mat direction, vector<ContourPoint> &contour, float alpha, float beta, float gamma)
-{
-    int p_cnt = contour.size();
-    vector<ContourPoint> prev_contour(contour);
-    for (int i = 0; i < p_cnt; i++)
-    {
-        ContourPoint pp, p, pn;
-        pp = prev_contour[(i - 1 + p_cnt) % p_cnt];
-        p = prev_contour[i % p_cnt];
-        pn = prev_contour[(i + 1) % p_cnt];
-        // p.x += alpha * (p - pp).x + beta * ((pn - (2 * p) + pp)).x;
-        // p.y += alpha * (p - pp).y + beta * ((pn - (2 * p) + pp)).y;
-
-        // Vec2f img_force(0, 0), tmp;
-        // int w_size = 45, offset = w_size / 2;
-        // for (int wj = 0; wj < w_size; wj++)
-        // {
-        //     for (int wi = 0; wi < w_size; wi++)
-        //     {
-        //         int v_mag = magnitude.at<Vec3b>(wj - offset, wi - offset)[0];
-        //         float v_theta = direction.at<Vec3f>(wj - offset, wi - offset)[0];
-        //         float x = 0, y = 0;
-        //         if (!isnanf(v_theta))
-        //         {
-        //             // v_theta+=CV_PI;
-        //             x = v_mag * cosf32(v_theta);
-        //             y = v_mag * sinf32(v_theta);
-        //         }
-        //         tmp = Vec2f(x, y);
-        //         img_force += tmp;
-        //     }
-        // }
-        // img_force /= -w_size * w_size;
-
+        // Energy terms
         float e_cont, e_curve, e_image, e_point;
 
-        float theta = direction.at<Vec3f>(p.y, p.x)[0];
-
-        // if (pn.settle || pp.settle)
-        // {
-        //     beta = 0;
-        // }
-        // if(pp.settle){
-        //     alpha=alpha*2;
-        // }
-
+        // Search window settings
         int s_size = 25, s_offset = s_size / 2;
         int min_i = 0, min_j = 0;
         float min_e_point = numeric_limits<float>::max();
+
+        // Search within the window to minimise energy
         for (int wj = 0; wj < s_size; wj++)
         {
             for (int wi = 0; wi < s_size; wi++)
             {
                 ContourPoint tmp;
 
+                // Candidate point within the window
                 tmp.x = p.x - s_offset + wi;
                 tmp.y = p.y - s_offset + wj;
                 int tmp_mag = magnitude.at<Vec3b>((int)tmp.y, (int)tmp.x)[0];
-                
+
+                // Calculate energy terms
                 e_cont = powf32((pn + pp - 2 * tmp).x, 2) + powf32((pn + pp - 2 * tmp).y, 2);
                 e_curve = powf32((tmp - pp).x, 2) + powf32((tmp - pp).y, 2);
                 e_image = -tmp_mag * tmp_mag;
                 e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
+
+                // Update if a lower energy point is found
                 if (e_point < min_e_point)
                 {
                     min_e_point = e_point;
@@ -441,70 +354,47 @@ void activeContour2(Mat magnitude, Mat direction, vector<ContourPoint> &contour,
                 }
             }
         }
+
+        // Update the contour point with the minimum energy point found
         contour[i].x = min_i;
         contour[i].y = min_j;
-        contour[i].energy=min_e_point;
-        // if (min_e_point < 0)
-        // {
-        //     contour[i].settle = true;
-        //     continue;
-        // }
-
-        // p.x += gamma * img_force[0];
-        // p.y += gamma * img_force[1];
-        // e_curve = powf32((p - pp).x, 2) + powf32((p - pp).y, 2);
-        // e_cont = powf32((pn + pp - 2 * p).x, 2) + powf32((pn + pp - 2 * p).y, 2);
-        // e_image = -mag * mag;
-        // e_point = (alpha * e_cont) + (beta * e_curve) + (gamma * e_image);
-
-        // printf("%f %f %f %f %f %d\n", e_cont, e_curve, e_image, e_point, p.energy, e_point > p.energy);
-
-        // contour[i].x += alpha * (pn + pp - 2 * p).x + beta * ((p - pp)).x + gamma * img_force[0];
-        // contour[i].y += alpha * (pn + pp - 2 * p).y + beta * ((p - pp)).y + gamma * img_force[1];
-        // contour[i].energy = e_point;
-
-        // if (!isnanf(theta))
-        // {
-        //     // contour[i].x -= gamma * mag * cos(theta);
-        //     // contour[i].y -= gamma * mag * sin(theta);
-
-        // }
-        // contour[i].x += gamma * img_force[0];
-        // contour[i].y += gamma * img_force[1];
-        // printf("%d - %f\n",i, theta);
-
-        if (contour[i].x < 0 || contour[i].x != contour[i].x)
-        {
-            contour[i].x = 0;
-        }
-        if (contour[i].x >= magnitude.cols || contour[i].x != contour[i].x)
-        {
-            contour[i].x = magnitude.cols - 1;
-        }
-        if (contour[i].y < 0 || contour[i].y != contour[i].y)
-        {
-            contour[i].y = 0;
-        }
-        if (contour[i].y >= magnitude.rows || contour[i].y != contour[i].y)
-        {
-            contour[i].y = magnitude.rows - 1;
-        }
+        contour[i].energy = min_e_point;
     }
 }
 
+
+/**
+ * @brief Calculate the total energy of a contour.
+ * 
+ * This function computes the sum of the energy values of each point in the contour.
+ * It is useful for evaluating the overall energy of the contour, which can be a measure of its
+ * alignment with image features or its smoothness, depending on the energy model used.
+ * 
+ * @param contour A reference to a vector of ContourPoint, each with an associated energy value.
+ * @return float The total energy of the contour.
+ */
 float contourEnergy(vector<ContourPoint> &contour)
 {
     float tmp = 0;
     int cnt = contour.size();
+
+    // Iterate over each point in the contour
     for (int c = 0; c < cnt; c++)
     {
-        if (!isinff(contour[c].energy) && contour[c].energy!=numeric_limits<float>::max())
+        // Check if the energy is not infinity and not the 
+        // maximum float value
+        // This is done to ensure that only valid, finite 
+        // energy values are summed
+        if (!isinff(contour[c].energy) && contour[c].energy != numeric_limits<float>::max())
         {
-            tmp += contour[c].energy;
+            // Add the point's energy to the total
+            tmp += contour[c].energy; 
         }
     }
-    return tmp;
+
+    return tmp; // Return the total energy of the contour
 }
+
 
 Mat showSnake(Mat input, vector<ContourPoint> contour)
 {
@@ -521,12 +411,12 @@ Mat showSnake(Mat input, vector<ContourPoint> contour)
     return res;
 }
 
-void showGradient(Mat &input, Mat magnitude, Mat direction, int grid)
+void showGradient(Mat &input, Mat magnitude, Mat direction, int stride)
 {
     int r = 5;
-    for (int j = 0; j < input.rows; j += grid)
+    for (int j = 0; j < input.rows; j += stride)
     {
-        for (int i = 0; i < input.cols; i += grid)
+        for (int i = 0; i < input.cols; i += stride)
         {
             Point2i c(i, j);
             int mag = magnitude.at<Vec3b>(j, i)[0];
