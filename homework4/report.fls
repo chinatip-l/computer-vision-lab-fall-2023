@@ -771,6 +771,11 @@ INPUT ./output/second_order_gvf.jpg
 INPUT output/second_order_gvf.jpg
 INPUT ./output/second_order_gvf.jpg
 INPUT ./output/second_order_gvf.jpg
+INPUT ./force_model_failed.PNG
+INPUT ./force_model_failed.PNG
+INPUT force_model_failed.PNG
+INPUT ./force_model_failed.PNG
+INPUT ./force_model_failed.PNG
 INPUT report.aux
 INPUT ./report.out
 INPUT ./report.out

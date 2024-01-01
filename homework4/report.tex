@@ -915,14 +915,15 @@ Benefits of lower thresholding in image preprocessing include:
 \subsection{Initial Contour Setup}
 \paragraph*{}
 Initial contour point setup is crucial part. A well-thought-out setup can significantly enhance the efficiency of the algorithm. One effective approach is to use a circular initial contour. This method helps to mitigate the 'corner effect', where corners take longer time to converge, potentially slowing down the process. Alternatively, a rectangular initial contour can be used to ensure comprehensive coverage of the image area, especially in images where the target features are more aligned with rectangular shapes.
-
+\paragraph*{}
 However, it's important to note that there is no one-size-fits-all solution for all problems. The effectiveness of the initial contour setup can be greatly improved by having prior knowledge about the target image, ideally supervised by a human. This allows for a more tailored approach, increasing the efficiency and accuracy of the image processing task.
-
+\paragraph*{}
 In the context of this experiment, The circular model was chosen. The circle has a radius of 400 pixels, and its center coincides with the center of the image. This setup was chosen as it provides a balanced approach, offering good initial coverage and reducing the time to converge, especially in images where the target features are centrally located or distributed evenly across the image. This standardized approach simplifies the process and provides a consistent starting point for processing a variety of images
 
 \subsection{Contour Point Searching Window Size}
 \paragraph*{}
-After conducting multiple experiments, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima noise. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.\\
+After conducting multiple experiments, it was determined that the optimal search window size is 25x25. In real-world applications, the choice of this parameter significantly depends on the gap between distinct features in an image and their intensity levels. The selection of an appropriate window size is critical for efficient processing. If the window size is too small, the algorithm might slow down or get stuck in local minima noise. This occurs because a smaller window may not capture enough context to make accurate decisions, leading to repeated recalculations or getting trapped in a suboptimal solution that appears best in a limited view but isn't globally optimal.
+\paragraph*{}
 On the other hand, a window that's too large risks overlooking important features. Larger windows encompass more of the image, which can dilute the significance of smaller, yet critical features. This can cause the algorithm to miss subtle but essential details, as it focuses on broader trends over smaller, localized variations. In essence, the window size acts as a balancing factor. It must be large enough to capture sufficient context for accurate analysis but not so large that it overlooks finer details. Adjusting this parameter based on the feature gap and intensity ensures the algorithm remains sensitive to important details while maintaining processing efficiency.
 
 \subsection{\(\alpha\), \(\beta\), and \(\gamma\) Selection}
@@ -971,7 +972,7 @@ Balancing these parameters is key to achieving good performance with active cont
 
 \subsection{Convergence Detection, Oscillating State, and Terminal Condition}
 \paragraph*{}
-For this experiment, we have chosen to use 'convergence' or 'oscillation' as the terminal criteria. Convergence is defined as the point where the movement of the contour points becomes negligible, indicating that the algorithm has successfully detected the target features and there is no further significant change in the contour's position. This is a common criterion in image processing, as it signifies that the algorithm has stabilized and the desired outcome has been achieved.
+For this experiment, the chosen strategy are 'convergence' and 'oscillation' as the terminal criteria. Convergence is defined as the point where the movement of the contour points becomes negligible, indicating that the algorithm has successfully detected the target features and there is no further significant change in the contour's position. This is a common criterion in image processing, as it signifies that the algorithm has stabilized and the desired outcome has been achieved.
 \paragraph*{}
 On the other hand, 'oscillation' is used as a criterion to prevent excessive computation and to handle cases where the contour cannot settle on a stable configuration. Oscillation occurs when the contour points repeatedly move back and forth over a small area without reaching a state of convergence. When such a pattern is detected, the process is terminated to avoid unnecessary calculations and potential infinite loops.
 \paragraph*{}
@@ -1002,7 +1003,6 @@ Switching to second-order derivatives can address this issue effectively. The se
 
 \end{figure}
 
-\clearpage
 
 \subsection{Force Model}
 \paragraph*{}
@@ -1016,39 +1016,18 @@ The force model operates through vector addition. In this approach, forces are c
 \paragraph*{}
 Gradient Vector Flow (GVF) plays a crucial role in this force model, both in its first-order and second-order forms. First-order GVF provides information about the direction of the most significant intensity change, guiding the contour points towards areas of high gradient. Second-order GVF, on the other hand, adds context about the curvature of the intensity landscape, helping to more accurately target the edges of objects.
 \paragraph*{}
-While in this homework, the code for this approach is not provided since it is still not provide a good result and I decided to remove it, the experiments was conducted, and the potential of this method is clear. Its faster convergence and reduced computational.
+While in this homework, the code for this approach is not provided since it is still not provide a good result and we decided to remove it, the experiments was conducted, and the potential of this method is clear. Its faster convergence and reduced computational complexity outperform the energy model.
 
 \begin{figure}[!htb]
     \begin{minipage}{\linewidth}
         \centering
-        \begin{subfigure}{0.49\textwidth}
-            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_1_THRES_50.png}
-            \subcaption{Theta = 1 deg}
-        \end{subfigure}
-        \begin{subfigure}{0.49\textwidth}
-            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_3_THRES_50.png}
-            \subcaption{Theta = 3 deg}
-        \end{subfigure}
-
-        \begin{subfigure}{0.49\textwidth}
-            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_5_THRES_50.png}
-            \subcaption{Theta = 5 deg}
-        \end{subfigure}
-        \begin{subfigure}{0.49\textwidth}
-            %   \includegraphics[width=\linewidth]{output/img2_q3_HOUGH_THETA_10_THRES_50.png}
-            \subcaption{Theta = 10 deg}
-        \end{subfigure}
-
-        \caption{Comparison of Angle step affect line detection}
+        \includegraphics[width=\linewidth]{force_model_failed.PNG}
+        \caption{Result from Force Model (Incomplete), this result performed with 5 epoch}
     \end{minipage}
 
 \end{figure}
 
 \clearpage
-
-\subsection{Summary}
-\paragraph*{}Please be reminded that there is no single, complete formula that yields the best
-result. For this case, prior knowledge about the line direction helps increase accuracy and reduce calculation complexity
 
 \appendix
 \chapter{Git Repository}

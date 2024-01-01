@@ -31,9 +31,8 @@
 \contentsline {subsection}{\numberline {3.2.5}\(\alpha \), \(\beta \), and \(\gamma \) Selection}{32}{subsection.3.2.5}%
 \contentsline {subsection}{\numberline {3.2.6}Convergence Detection, Oscillating State, and Terminal Condition}{34}{subsection.3.2.6}%
 \contentsline {subsection}{\numberline {3.2.7}Gradient Vector Field}{34}{subsection.3.2.7}%
-\contentsline {subsection}{\numberline {3.2.8}Force Model}{36}{subsection.3.2.8}%
-\contentsline {subsection}{\numberline {3.2.9}Summary}{37}{subsection.3.2.9}%
-\contentsline {chapter}{\numberline {A}Git Repository}{38}{appendix.A}%
-\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{39}{appendix.B}%
-\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{44}{appendix.C}%
-\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{48}{appendix.D}%
+\contentsline {subsection}{\numberline {3.2.8}Force Model}{35}{subsection.3.2.8}%
+\contentsline {chapter}{\numberline {A}Git Repository}{37}{appendix.A}%
+\contentsline {chapter}{\numberline {B}Source Code: main.cpp}{38}{appendix.B}%
+\contentsline {chapter}{\numberline {C}Source Code: func.hpp}{43}{appendix.C}%
+\contentsline {chapter}{\numberline {D}Source Code: func.cpp}{47}{appendix.D}%
