@@ -1,7 +1,7 @@
 # Fdb version 3
-["pdflatex"] 1704028622 "/home/chinatip/computer-vision-lab-fall-2023/homework4/report.tex" "report.pdf" "report" 1704028623
+["pdflatex"] 1704028839 "/home/chinatip/computer-vision-lab-fall-2023/homework4/report.tex" "report.pdf" "report" 1704028840
   "/etc/texmf/web2c/texmf.cnf" 1702105025 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/chinatip/computer-vision-lab-fall-2023/homework4/report.tex" 1704028621 61966 10b2af497a0b8be4ced7358321a5beb6 ""
+  "/home/chinatip/computer-vision-lab-fall-2023/homework4/report.tex" 1704028840 56787 7f80ac1ab2e35dfa16c8adf2939ee0e4 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1200.tfm" 1136768653 1536 74b7293ec3713bb7fdca8dd1bd1f469c ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
@@ -114,10 +114,10 @@
   "output/sobel_x.jpg" 1704023554 90191 8d7272a31b2031f9ffc12a6fc2c16ac2 ""
   "output/sobel_y.jpg" 1704023554 90770 8ebc1b94ecff6c66b46a8d1a0d31b1c0 ""
   "program.PNG" 1704022624 668280 5e4b528f2e9c5f336b9bdc03af1ff222 ""
-  "report.aux" 1704028623 6857 6d84d3fa6f4e31ce5f84a4215d68cbaa "pdflatex"
-  "report.out" 1704028623 4508 e7f26c7a140a211c0aba203f821d5a9c "pdflatex"
-  "report.tex" 1704028621 61966 10b2af497a0b8be4ced7358321a5beb6 ""
-  "report.toc" 1704028623 2858 fd81545f1aae0e97b22960e42f94c64f "pdflatex"
+  "report.aux" 1704028840 7133 54fb17d5853fdbf08bb156efc3c1f45e "pdflatex"
+  "report.out" 1704028840 4907 2c84bd4af817f2299cddbaa8ec584e7b "pdflatex"
+  "report.tex" 1704028840 56787 7f80ac1ab2e35dfa16c8adf2939ee0e4 ""
+  "report.toc" 1704028840 3052 6a23c69ad69a0dca901bfec2c73b5dad "pdflatex"
   (generated)
   "report.aux"
   "report.log"
